@@ -7,7 +7,8 @@ from tqdm import tqdm
 import sys 
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from NeuroPress.QLayers import Conv2dW1A16, StochastiConv2dW1A16, LinearW1A16, StochasticLinearW1A16, Conv2dW1A1, StochastiConv2dW1A1, LinearW1A1
+from NeuroPress.QLayers import Conv2dW1A16, StochastiConv2dW1A16, LinearW1A16, StochasticLinearW1A16, Conv2dW1A1, StochastiConv2dW1A1, LinearW1A1, Conv2dW8A16, LinearW8A16
+from NeuroPress.Utils import get_device
 
 # Hyperparameters
 batch_size = 512
@@ -15,31 +16,32 @@ epochs = 1
 learning_rate = 0.01
 
 # Setting the device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = "mps"
+device = get_device()
 
+qconv = Conv2dW8A16
+qlinear = LinearW8A16
 
 class BinaryCNN(nn.Module):
     def __init__(self):
         super(BinaryCNN, self).__init__()
-        self.conv1 = Conv2dW1A1(1, 256, kernel_size=5, padding=2)  # Adding padding
-        self.bn1 = nn.BatchNorm2d(256)
-        self.conv2 = Conv2dW1A1(256, 512, kernel_size=5, padding=2)
-        self.bn2 = nn.BatchNorm2d(512)
-        self.conv3 = Conv2dW1A1(512, 1024, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm2d(1024)
-        self.conv4 = Conv2dW1A1(1024, 2048, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm2d(2048)
-        self.conv5 = Conv2dW1A1(2048, 256, kernel_size=1)  # No need for padding on 1x1 conv
+        self.conv1 = qconv(1, 32, kernel_size=5, padding=2)  # Adding padding
+        self.bn1 = nn.BatchNorm2d(32)
+        self.conv2 = qconv(32, 64, kernel_size=5, padding=2)
+        self.bn2 = nn.BatchNorm2d(64)
+        self.conv3 = qconv(64, 128, kernel_size=3, padding=1)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.conv4 = qconv(128, 256, kernel_size=3, padding=1)
+        self.bn4 = nn.BatchNorm2d(256)
+        self.conv5 = qconv(256, 256, kernel_size=1)  # No need for padding on 1x1 conv
         self.bn5 = nn.BatchNorm2d(256)
         self.pool = nn.MaxPool2d(2)
         self.hardtanh = nn.Hardtanh()
 
-        self.fc1 = LinearW1A1(2304, 1024)
+        self.fc1 = qlinear(2304, 1024)
         self.fcbn1 = nn.BatchNorm1d(1024)
-        self.fc2 = LinearW1A1(1024, 512)
+        self.fc2 = qlinear(1024, 512)
         self.fcbn2 = nn.BatchNorm1d(512)
-        self.fc3 = LinearW1A1(512, 10)
+        self.fc3 = qlinear(512, 10)
         
     def forward(self, x):
         x = self.hardtanh(self.bn1(self.conv1(x)))

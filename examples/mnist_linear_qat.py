@@ -4,57 +4,59 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import sys 
+import sys
 import os 
 import torch.nn.functional as F
 
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from NeuroPress.QLayers import LinearW1A16, StochasticLinearW1A16, LinearW1A1, StochasticLinearW1A1
+from NeuroPress.QLayers import LinearW1A16, StochasticLinearW1A16, LinearW1A1, StochasticLinearW1A1, LinearW8A16, LinearW4A16, LinearW2A16
+from NeuroPress.Utils import get_device
 
 
 # Hyperparameters
 input_size = 784  # MNIST images are 28x28 pixels
-hidden_sizes = [6144, 6144, 6144, 6144]
-hidden_sizes = [512, 512, 512, 512]
+hidden_sizes = [128, 64] # hidden layer sizes of the network 
 output_size = 10   # 10 classes for the digits 0-9
 batch_size = 512   # You can modify this as needed
 epochs = 1       # Number of training epochs
-learning_rate = 0.01
+learning_rate = 0.01 # learning rate
+device = get_device() # Setting the device
 
-# Setting the device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = "mps"
-    
+qlayer = LinearW8A16 # qunatized layer example
 
-class BinaryMLP(nn.Module):
+class QuantMLP(nn.Module):
     def __init__(self):
-        super(BinaryMLP, self).__init__()
-        self.act = nn.Hardtanh()
-        self.fc1 = LinearW1A1(input_size, hidden_sizes[0])
-        self.bn1 = nn.BatchNorm1d(hidden_sizes[0])
-        self.fc2 = LinearW1A1(hidden_sizes[0], hidden_sizes[1])
-        self.bn2 = nn.BatchNorm1d(hidden_sizes[1])
-        self.fc3 = LinearW1A1(hidden_sizes[1], hidden_sizes[2])
-        self.bn3 = nn.BatchNorm1d(hidden_sizes[2], hidden_sizes[3])
-
-        self.fc4 = LinearW1A1(hidden_sizes[3], output_size)
-        self.drop=nn.Dropout(0.5)
+        super(QuantMLP, self).__init__()
+        self.fc1 = qlayer(input_size, hidden_sizes[0])
+        self.relu1 = nn.ReLU()
+        self.fc2 = qlayer(hidden_sizes[0], hidden_sizes[1])
+        self.relu2 = nn.ReLU()
+        self.fc3 = qlayer(hidden_sizes[1], output_size)
 
     def forward(self, x):
-        x = x.view(x.size(0), -1)  # Flatten the image tensor
-        x = self.fc1(x)
-        x = self.bn1(x)
-        x = self.act(x)
-        x = self.fc2(x)
-        x = self.bn2(x)
-        x = self.act(x)
+        x = x.view(-1, 784)  # Flatten the image
+        x = self.relu1(self.fc1(x))
+        x = self.relu2(self.fc2(x))
         x = self.fc3(x)
-        x = self.bn3(x)
-        x = self.act(x)
-        x = self.fc4(x)
-        x = self.drop(x)
         return x
+    
 
+class MLP(nn.Module):
+    def __init__(self):
+        super(MLP, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_sizes[0])
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(hidden_sizes[1], output_size)
+
+    def forward(self, x):
+        x = x.view(-1, 784)  # Flatten the image
+        x = self.relu1(self.fc1(x))
+        x = self.relu2(self.fc2(x))
+        x = self.fc3(x)
+        return x
 
 
 # Data loading
@@ -65,20 +67,9 @@ test_dataset = datasets.MNIST(root='./data', train=False, download=True, transfo
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
-# Initialize the model, loss criterion and optimizer
-model = BinaryMLP().to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-
-Qmodel = BinaryMLP().to(device)
+Qmodel = QuantMLP().to(device)
 Qcriterion = nn.CrossEntropyLoss()
 Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
-
-def quantize_model(qmodel, model):
-    for name, module in model.named_modules():
-        for qname, qmodule in qmodel.named_modules():
-            if name == qname:
-                qmodule.setup(module)
 
 # Training the model
 def train_model(model, optimizer, criterion):
@@ -97,7 +88,7 @@ def train_model(model, optimizer, criterion):
     return model
 
 # Evaluating the model
-def evaluate_model(model):
+def evaluate_model(model, criterion):
     model.eval()
     test_loss = 0
     correct = 0
@@ -117,33 +108,21 @@ def evaluate_model(model):
     print(f'Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)')
 
 
-def analyse_weights(model):
-    weight = model.fc1.weight.data.cpu().detach().clone().numpy().flatten()
-    import matplotlib.pyplot as plt
-    plt.hist(weight)
-    plt.show()
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
+evaluate_model(Qmodel, Qcriterion)
 
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel)
+
 
 

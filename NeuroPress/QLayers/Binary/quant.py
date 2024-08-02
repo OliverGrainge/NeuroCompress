@@ -19,6 +19,7 @@ class SignBinarizeFunction(torch.autograd.Function):
         return grad_input
 
 
+
 class StochasticBinarySignFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, temp=10000.0):

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import math
-from NeuroPress.QLayers.utils import SignBinarizeFunction, StochasticBinarySignFunction
+from .quant import SignBinarizeFunction, StochasticBinarySignFunction
 
 
 class BaseBinaryConv2d(nn.Conv2d):
