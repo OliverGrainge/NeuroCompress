@@ -27,7 +27,7 @@ class BaseIntegerLinear(nn.Linear):
 class LinearW8A16(BaseIntegerLinear): 
     def forward(self, x):
         quantized_weights, scale = quantizelinear(self.weight, bits=8)
-        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=8)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=32)
         dequantized_weights = scale * quantized_weights
         dequantized_bias = scale * quantized_bias
         return nn.functional.linear(x, dequantized_weights, dequantized_bias)
@@ -35,7 +35,7 @@ class LinearW8A16(BaseIntegerLinear):
 class LinearW4A16(BaseIntegerLinear): 
     def forward(self, x):
         quantized_weights, scale = quantizelinear(self.weight, bits=4)
-        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=4)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=32)
         dequantized_weights = scale * quantized_weights
         dequantized_bias = scale * quantized_bias
         return nn.functional.linear(x, dequantized_weights, dequantized_bias)
@@ -43,7 +43,7 @@ class LinearW4A16(BaseIntegerLinear):
 class LinearW2A16(BaseIntegerLinear): 
     def forward(self, x):
         quantized_weights, scale = quantizelinear(self.weight, bits=2)
-        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=2)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=32)
         dequantized_weights = scale * quantized_weights
         dequantized_bias = scale * quantized_bias
         return nn.functional.linear(x, dequantized_weights, dequantized_bias)
@@ -53,7 +53,7 @@ class LinearW8A8(BaseIntegerLinear):
     def forward(self, x):
         quantized_weights, scale_weights = quantizelinear(self.weight, bits=8)
         quantized_x, scale_x = quantizelinear(x, bits=8)
-        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=8)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=32)
         out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, quantized_bias)
         return out
     
@@ -61,7 +61,7 @@ class LinearW4A8(BaseIntegerLinear):
     def forward(self, x):
         quantized_weights, scale_weights = quantizelinear(self.weight, bits=8)
         quantized_x, scale_x = quantizelinear(x, bits=4)
-        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=4)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=32)
         out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, quantized_bias)
         return out
 
@@ -69,7 +69,7 @@ class LinearW2A8(BaseIntegerLinear):
     def forward(self, x):
         quantized_weights, scale_weights = quantizelinear(self.weight, bits=8)
         quantized_x, scale_x = quantizelinear(x, bits=2)
-        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=2)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=32)
         out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, quantized_bias)
         return out
 
