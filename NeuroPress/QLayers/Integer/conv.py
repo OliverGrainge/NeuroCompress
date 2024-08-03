@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import math
-from .quant import quantizeconv2d, quantizelinear
+from .quant import quantizeconv2d, quantizelinear, quantize_linear_tensor
 
 class BaseIntegerConv2d(nn.Conv2d):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True):
@@ -25,42 +25,48 @@ class BaseIntegerConv2d(nn.Conv2d):
 
 class Conv2dW8A16(BaseIntegerConv2d): 
     def forward(self, x):
-        quantized_weights, scale = quantizeconv2d(self.weight, bits=8)
-        dequantized_weights = quantized_weights * scale
-        return nn.functional.conv2d(x, dequantized_weights, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        quantized_weights, scale_weights = quantizeconv2d(self.weight, bits=8)
+        quantized_bias, scale_bias = quantizelinear(self.bias, bits=8)
+        dequantized_weights = quantized_weights * scale_weights
+        dequantized_bias = quantized_bias * scale_bias
+        return nn.functional.conv2d(x, dequantized_weights, dequantized_bias, self.stride, self.padding, self.dilation, self.groups)
 
 class Conv2dW4A16(BaseIntegerConv2d): 
     def forward(self, x):
-        quantized_weights, scale = quantizeconv2d(self.weight, bits=4)
-        dequantized_weights = quantized_weights * scale
-        return nn.functional.conv2d(x, dequantized_weights, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        quantized_weights, scale_weights = quantizeconv2d(self.weight, bits=4)
+        quantized_bias, scale_bias = quantizelinear(self.bias, bits=4)
+        dequantized_weights = quantized_weights * scale_weights
+        dequantized_bias = quantized_bias * scale_bias
+        return nn.functional.conv2d(x, dequantized_weights, dequantized_bias, self.stride, self.padding, self.dilation, self.groups)
 
 class Conv2dW2A16(BaseIntegerConv2d): 
     def forward(self, x):
-        quantized_weights, scale = quantizeconv2d(self.weight, bits=2)
-        dequantized_weights = quantized_weights * scale
-        return nn.functional.conv2d(x, dequantized_weights, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        quantized_weights, scale_weights = quantizeconv2d(self.weight, bits=2)
+        quantized_bias, scale_bias = quantizelinear(self.bias, bits=2)
+        dequantized_weights = quantized_weights * scale_weights
+        dequantized_bias = quantized_bias * scale_bias
+        return nn.functional.conv2d(x, dequantized_weights, dequantized_bias, self.stride, self.padding, self.dilation, self.groups)
 
 class Conv2dW8A8(BaseIntegerConv2d): 
     def forward(self, x):
         quantized_x, scale_x = quantizelinear(x, bits=8)
         quantized_weights, scale_w = quantizeconv2d(self.weight, bits=8)
-        dequantized_weights = quantized_weights * scale_w
-        dequantized_x = quantized_x * scale_x
-        return nn.functional.conv2d(dequantized_x, dequantized_weights, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_w.max() * scale_x, bits=8)
+        out = scale_w[:, :, :, 0].repeat(x.shape[0], 1, 1, 1) * scale_x * nn.functional.conv2d(quantized_x, quantized_weights, quantized_bias, self.stride, self.padding, self.dilation, self.groups)
+        return out
 
 class Conv2dW4A8(BaseIntegerConv2d): 
     def forward(self, x):
         quantized_x, scale_x = quantizelinear(x, bits=8)
         quantized_weights, scale_w = quantizeconv2d(self.weight, bits=4)
-        dequantized_weights = quantized_weights * scale_w
-        dequantized_x = quantized_x * scale_x
-        return nn.functional.conv2d(dequantized_x, dequantized_weights, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_w.max() * scale_x, bits=4)
+        out = scale_w[:, :, :, 0].repeat(x.shape[0], 1, 1, 1) * scale_x * nn.functional.conv2d(quantized_x, quantized_weights, quantized_bias, self.stride, self.padding, self.dilation, self.groups)
+        return out
 
 class Conv2dW2A8(BaseIntegerConv2d): 
     def forward(self, x):
         quantized_x, scale_x = quantizelinear(x, bits=8)
         quantized_weights, scale_w = quantizeconv2d(self.weight, bits=2)
-        dequantized_weights = quantized_weights * scale_w
-        dequantized_x = quantized_x * scale_x
-        return nn.functional.conv2d(dequantized_x, dequantized_weights, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_w.max() * scale_x, bits=2)
+        out = scale_w[:, :, :, 0].repeat(x.shape[0], 1, 1, 1) * scale_x * nn.functional.conv2d(quantized_x, quantized_weights, quantized_bias, self.stride, self.padding, self.dilation, self.groups)
+        return out

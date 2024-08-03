@@ -6,13 +6,15 @@ def compute_linear_scale(tensor: torch.Tensor, bits=8) -> float:
     quantized_range = 2**(bits-1) - 1
     return real_range / quantized_range 
 
+def quantize_linear_tensor(tensor: torch.Tensor, scale: torch.Tensor, bits=8):
+    qtensor = torch.round(tensor/scale)
+    qtensor = torch.clip(qtensor, -2**(bits-1), 2**(bits-1) -1)
+    return qtensor 
 
 def quantize_linear_weights(tensor: torch.Tensor, bits: int=8) -> Tuple[torch.Tensor, float]:
     scale = compute_linear_scale(tensor)
-    qtensor = torch.round(tensor/scale)
-    qtensor = torch.clip(qtensor, -2**(bits-1), 2**(bits-1) -1)
+    qtensor = quantize_linear_tensor(tensor, scale, bits=bits)
     return qtensor, scale
-
 
 def quantize_conv2d_weights(tensor: torch.Tensor, bits: int = 8) -> Tuple[torch.Tensor, torch.Tensor]:
     # Calculate the scale
