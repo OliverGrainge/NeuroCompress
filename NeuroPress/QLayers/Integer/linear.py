@@ -1,7 +1,7 @@
 import torch 
 import torch.nn as nn
 import math
-from .quant import quantizelinear
+from .quant import quantizelinear, quantize_linear_tensor
 
 class BaseIntegerLinear(nn.Linear):
     def __init__(self, in_features, out_features, bias=True):
@@ -47,31 +47,24 @@ class LinearW8A8(BaseIntegerLinear):
     def forward(self, x):
         quantized_weights, scale_weights = quantizelinear(self.weight, bits=8)
         quantized_x, scale_x = quantizelinear(x, bits=8)
-        out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, None)
-        if self.bias is not None:
-            out += self.bias.view(1, -1).expand_as(out)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=8)
+        out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, quantized_bias)
         return out
     
 class LinearW4A8(BaseIntegerLinear):
     def forward(self, x):
-        quantized_weights, scale_weights = quantizelinear(self.weight, bits=4)
-        dequantized_weights = quantized_weights * scale_weights
-        quantized_weights, scale_weights = quantizelinear(dequantized_weights, bits=8)
-        quantized_x, scale_x = quantizelinear(x, bits=8)
-        out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, None)
-        if self.bias is not None:
-            out += self.bias.view(1, -1).expand_as(out)
+        quantized_weights, scale_weights = quantizelinear(self.weight, bits=8)
+        quantized_x, scale_x = quantizelinear(x, bits=4)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=4)
+        out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, quantized_bias)
         return out
 
 class LinearW2A8(BaseIntegerLinear):
     def forward(self, x):
-        quantized_weights, scale_weights = quantizelinear(self.weight, bits=2)
-        dequantized_weights = quantized_weights * scale_weights
-        quantized_weights, scale_weights = quantizelinear(dequantized_weights, bits=8)
-        quantized_x, scale_x = quantizelinear(x, bits=8)
-        out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, None)
-        if self.bias is not None:
-            out += self.bias.view(1, -1).expand_as(out)
+        quantized_weights, scale_weights = quantizelinear(self.weight, bits=8)
+        quantized_x, scale_x = quantizelinear(x, bits=2)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale_weights * scale_x, bits=2)
+        out = scale_x * scale_weights * nn.functional.linear(quantized_x, quantized_weights, quantized_bias)
         return out
 
 

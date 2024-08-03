@@ -7,6 +7,8 @@ def compute_linear_scale(tensor: torch.Tensor, bits=8) -> float:
     return real_range / quantized_range 
 
 def quantize_linear_tensor(tensor: torch.Tensor, scale: torch.Tensor, bits=8):
+    if tensor is None: 
+        return tensor
     qtensor = torch.round(tensor/scale)
     qtensor = torch.clip(qtensor, -2**(bits-1), 2**(bits-1) -1)
     return qtensor 
