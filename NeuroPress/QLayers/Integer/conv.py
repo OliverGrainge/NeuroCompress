@@ -25,26 +25,26 @@ class BaseIntegerConv2d(nn.Conv2d):
 
 class Conv2dW8A16(BaseIntegerConv2d): 
     def forward(self, x):
-        quantized_weights, scale_weights = quantizeconv2d(self.weight, bits=8)
-        quantized_bias, scale_bias = quantizelinear(self.bias, bits=8)
-        dequantized_weights = quantized_weights * scale_weights
-        dequantized_bias = quantized_bias * scale_bias
+        quantized_weights, scale = quantizeconv2d(self.weight, bits=8)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale.max(), bits=32)
+        dequantized_weights = quantized_weights * scale
+        dequantized_bias = quantized_bias * scale.max()
         return nn.functional.conv2d(x, dequantized_weights, dequantized_bias, self.stride, self.padding, self.dilation, self.groups)
 
 class Conv2dW4A16(BaseIntegerConv2d): 
     def forward(self, x):
-        quantized_weights, scale_weights = quantizeconv2d(self.weight, bits=4)
-        quantized_bias, scale_bias = quantizelinear(self.bias, bits=4)
-        dequantized_weights = quantized_weights * scale_weights
-        dequantized_bias = quantized_bias * scale_bias
+        quantized_weights, scale = quantizeconv2d(self.weight, bits=4)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale.max(), bits=32)
+        dequantized_weights = quantized_weights * scale
+        dequantized_bias = quantized_bias * scale.max()
         return nn.functional.conv2d(x, dequantized_weights, dequantized_bias, self.stride, self.padding, self.dilation, self.groups)
 
 class Conv2dW2A16(BaseIntegerConv2d): 
     def forward(self, x):
-        quantized_weights, scale_weights = quantizeconv2d(self.weight, bits=2)
-        quantized_bias, scale_bias = quantizelinear(self.bias, bits=2)
-        dequantized_weights = quantized_weights * scale_weights
-        dequantized_bias = quantized_bias * scale_bias
+        quantized_weights, scale = quantizeconv2d(self.weight, bits=2)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale.max(), bits=32)
+        dequantized_weights = quantized_weights * scale
+        dequantized_bias = quantized_bias * scale.max()
         return nn.functional.conv2d(x, dequantized_weights, dequantized_bias, self.stride, self.padding, self.dilation, self.groups)
 
 class Conv2dW8A8(BaseIntegerConv2d): 
