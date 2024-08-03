@@ -27,20 +27,26 @@ class BaseIntegerLinear(nn.Linear):
 class LinearW8A16(BaseIntegerLinear): 
     def forward(self, x):
         quantized_weights, scale = quantizelinear(self.weight, bits=8)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=8)
         dequantized_weights = scale * quantized_weights
-        return nn.functional.linear(x, dequantized_weights, self.bias)
+        dequantized_bias = scale * quantized_bias
+        return nn.functional.linear(x, dequantized_weights, dequantized_bias)
     
 class LinearW4A16(BaseIntegerLinear): 
     def forward(self, x):
         quantized_weights, scale = quantizelinear(self.weight, bits=4)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=4)
         dequantized_weights = scale * quantized_weights
-        return nn.functional.linear(x, dequantized_weights, self.bias)
+        dequantized_bias = scale * quantized_bias
+        return nn.functional.linear(x, dequantized_weights, dequantized_bias)
 
 class LinearW2A16(BaseIntegerLinear): 
     def forward(self, x):
         quantized_weights, scale = quantizelinear(self.weight, bits=2)
+        quantized_bias = quantize_linear_tensor(self.bias, scale=scale, bits=2)
         dequantized_weights = scale * quantized_weights
-        return nn.functional.linear(x, dequantized_weights, self.bias)
+        dequantized_bias = scale * quantized_bias
+        return nn.functional.linear(x, dequantized_weights, dequantized_bias)
     
 
 class LinearW8A8(BaseIntegerLinear):
