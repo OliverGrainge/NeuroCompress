@@ -19,7 +19,7 @@ learning_rate = 0.01
 device = get_device()
 
 qconv = Conv2dW8A16
-qlinear = LinearW8A16
+qlinear = LinearW8A8
 
 class BinaryCNN(nn.Module):
     def __init__(self):
