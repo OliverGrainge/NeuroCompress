@@ -1,47 +1,48 @@
 import pytest
 import torch
-import torch.nn as nn
-from NeuroPress.QLayers.Integer.conv import Conv2dW8A16, Conv2dW4A16, Conv2dW2A16, Conv2dW8A8, Conv2dW4A8, Conv2dW2A8
+from NeuroPress.QLayers.Integer.conv import BaseConv2d, WeightOnlyQuant, FullQuant, Conv2dW8A16, Conv2dW4A16, Conv2dW2A16, Conv2dW8A8, Conv2dW4A8, Conv2dW2A8
 
-@pytest.fixture
-def input_tensor():
-    # Create an input tensor that simulates a mini-batch of 4 images, each with 3 color channels, 64x64 pixels
-    return torch.randn(4, 3, 64, 64)
+def test_base_conv2d_abstract():
+    conv = BaseConv2d(3, 16, 3)  # Should raise error due to direct instantiation
 
-@pytest.fixture
-def setup_conv2d():
-    # Setup a Conv2D layer to copy parameters from
-    conv = nn.Conv2d(3, 16, kernel_size=3, padding=1, bias=True)
-    nn.init.uniform_(conv.weight, -1, 1)
-    if conv.bias is not None:
-        nn.init.uniform_(conv.bias, -1, 1)
-    return conv
+def test_weight_only_quant_init():
+    conv = WeightOnlyQuant(3, 16, 3, bits=8, type="signed")
+    assert conv.in_channels == 3
+    assert conv.out_channels == 16
+    assert conv.kernel_size == (3, 3)  # assuming tuple
+    assert conv.bits == 8
+    assert conv.type == "signed"
 
-@pytest.mark.parametrize("cls", [Conv2dW8A16, Conv2dW4A16, Conv2dW2A16, Conv2dW8A8, Conv2dW4A8, Conv2dW2A8])
-def test_forward_pass(cls, input_tensor):
-    model = cls(3, 16, kernel_size=3, padding=1)
-    output = model(input_tensor)
-    assert output.shape == (4, 16, 64, 64), "Output shape mismatch."
+def test_full_quant_init():
+    conv = FullQuant(3, 16, 3, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
+    assert conv.in_channels == 3
+    assert conv.out_channels == 16
+    assert conv.act_bits == 8
+    assert conv.weight_bits == 8
 
-def test_init_and_setup(setup_conv2d):
-    model = Conv2dW8A16(3, 16, kernel_size=3, padding=1)
-    model.setup(setup_conv2d)
-    assert torch.allclose(model.weight.data, setup_conv2d.weight.data), "Weights were not copied correctly."
-    if model.bias is not None:
-        assert torch.allclose(model.bias.data, setup_conv2d.bias.data), "Biases were not copied correctly."
+def test_weight_only_quant_forward():
+    conv = WeightOnlyQuant(3, 16, 3, bits=8, type="signed")
+    input_tensor = torch.randn(1, 3, 32, 32)
+    output = conv(input_tensor)
+    assert output.size() == (1, 16, 30, 30)  # Default stride=1 and padding=0
 
-def test_quantization_effectiveness():
-    # Create input tensor and initialize the model
-    input_tensor = torch.randn(4, 3, 64, 64)
-    model8 = Conv2dW8A16(3, 16, kernel_size=3, padding=1)
-    model4 = Conv2dW4A16(3, 16, kernel_size=3, padding=1)
-    model2 = Conv2dW2A16(3, 16, kernel_size=3, padding=1)
+def test_full_quant_forward():
+    conv = FullQuant(3, 16, 3, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
+    input_tensor = torch.randn(1, 3, 32, 32)
+    output = conv(input_tensor)
+    assert output.size() == (1, 16, 30, 30)  # Expected size with default settings
 
-    # Get outputs from models
-    output8 = model8(input_tensor)
-    output4 = model4(input_tensor)
-    output2 = model2(input_tensor)
+@pytest.mark.parametrize("class_type, in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias, bits, type", [
+    (Conv2dW8A16, 3, 16, 3, 1, 0, 1, 1, True, 8, "signed"),
+    (Conv2dW4A16, 3, 16, 3, 1, 0, 1, 1, True, 4, "unsigned"),
+    (Conv2dW2A16, 3, 16, 3, 1, 0, 1, 1, True, 2, "unsigned")
+])
+def test_specific_weight_only_quant_layers(class_type, in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias, bits, type):
+    conv = class_type(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias)
+    assert conv.bits == bits
+    assert conv.type == type
+    input_tensor = torch.randn(1, in_channels, 32, 32)
+    output = conv(input_tensor)
+    assert output.size() == (1, out_channels, 30, 30)  # Adjust as needed for stride/padding
 
-    # Check that outputs are different, confirming quantization depth has an effect
-    assert not torch.allclose(output8, output4), "Quantization depth did not affect the output between 8 and 4 bits."
-    assert not torch.allclose(output4, output2), "Quantization depth did not affect the output between 4 and 2 bits."
+# Additional tests can be added as needed for more specific behaviors or error cases

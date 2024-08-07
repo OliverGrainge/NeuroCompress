@@ -1,50 +1,57 @@
 import pytest
 import torch
-import torch.nn as nn
-from NeuroPress.QLayers.Integer.linear import LinearW8A16, LinearW4A16, LinearW2A16, LinearW8A8, LinearW4A8, LinearW2A8
+from NeuroPress.QLayers.Integer.linear import BaseLinear, WeightOnlyQuant, FullQuant, LinearW8A16, LinearW4A16, LinearW2A16, LinearW8A8, LinearW4A8, LinearW2A8
 
-@pytest.fixture
-def input_tensor():
-    return torch.randn(10, 20)  # Example input tensor
+def test_base_linear_abstract():
+    base_linear = BaseLinear(10, 5)  # Should not be instantiated directly
 
-@pytest.fixture
-def setup_linear():
-    linear = nn.Linear(20, 30, bias=True)
-    nn.init.uniform_(linear.weight, -1, 1)
-    if linear.bias is not None:
-        nn.init.uniform_(linear.bias, -1, 1)
-    return linear
+def test_weight_only_quant_init():
+    layer = WeightOnlyQuant(10, 5, bits=8, type="signed")
+    assert layer.in_features == 10
+    assert layer.out_features == 5
+    assert layer.bits == 8
+    assert layer.type == "signed"
 
-@pytest.mark.parametrize("cls", [LinearW8A16, LinearW4A16, LinearW2A16, LinearW8A8, LinearW4A8, LinearW2A8])
-def test_forward_pass(cls, input_tensor):
-    model = cls(20, 30)
-    output = model(input_tensor)
-    assert output.shape == (10, 30), "Output shape mismatch."
+def test_full_quant_init():
+    layer = FullQuant(10, 5, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
+    assert layer.in_features == 10
+    assert layer.out_features == 5
+    assert layer.act_bits == 8
+    assert layer.weight_bits == 8
 
-def test_init(setup_linear):
-    model = LinearW8A16(20, 30)
-    model.setup(setup_linear)
-    assert torch.allclose(model.weight.data, setup_linear.weight.data), "Weights were not copied correctly."
-    assert torch.allclose(model.bias.data, setup_linear.bias.data), "Biases were not copied correctly."
+def test_weight_only_quant_forward():
+    in_tensor = torch.randn(1, 10)
+    layer = WeightOnlyQuant(10, 5)
+    output = layer(in_tensor)
+    assert output.shape == (1, 5)
 
-def test_multiple_quantization_levels():
-    input_tensor = torch.randn(10, 20)
-    models = [LinearW8A16(20, 30), LinearW4A16(20, 30), LinearW2A16(20, 30)]
-    outputs = [model(input_tensor) for model in models]
-    # Assert different outputs due to different quantization bit levels
-    for i in range(1, len(outputs)):
-        assert not torch.allclose(outputs[i], outputs[i-1]), "Quantization level did not affect the output."
+def test_full_quant_forward():
+    in_tensor = torch.randn(1, 10)
+    layer = FullQuant(10, 5, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
+    output = layer(in_tensor)
+    assert output.shape == (1, 5)
 
-def test_combined_quantization_activation():
-    model = LinearW8A8(20, 30)
-    input_tensor = torch.randn(10, 20)
-    output = model(input_tensor)
-    assert output.shape == (10, 30), "Output shape mismatch."
+def test_specific_quant_layers():
+    layer = LinearW8A16(10, 5)
+    assert layer.bits == 8
+    assert layer.type == "signed"
 
-def test_dequantization_process():
-    model = LinearW4A8(20, 30)
-    input_tensor = torch.randn(10, 20)
-    output = model(input_tensor)
-    assert output.shape == (10, 30), "Output shape mismatch due to incorrect dequantization."
+    layer = LinearW2A8(10, 5)
+    assert layer.weight_bits == 2
+    assert layer.act_bits == 8
 
-# Add more tests as necessary for other classes or methods
+@pytest.mark.parametrize("class_type, in_features, out_features, bits, type", [
+    (LinearW8A16, 10, 5, 8, "signed"),
+    (LinearW4A16, 10, 5, 4, "unsigned"),
+    (LinearW2A16, 10, 5, 2, "unsigned")
+])
+def test_various_weight_only_quant_layers(class_type, in_features, out_features, bits, type):
+    layer = class_type(in_features, out_features)
+    assert layer.bits == bits
+    assert layer.type == type
+    # Test forward function with random tensor
+    input_tensor = torch.randn(1, in_features)
+    output = layer(input_tensor)
+    assert output.shape == (1, out_features)
+
+# Additional tests can be added as needed

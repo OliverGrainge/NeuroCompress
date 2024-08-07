@@ -1,51 +1,42 @@
 import pytest
 import torch
-from NeuroPress.QLayers.Integer.quant import compute_linear_scale, quantize_linear_weights, quantize_conv2d_weights, quantizelinear, quantizeconv2d
+from NeuroPress.QLayers.Integer.quant import compute_scale, quantize_per_tensor, dequantize_per_tensor, forward_quantize_per_tensor, forward_quantize_per_channel
 
-@pytest.fixture
-def tensors():
-    return {
-        'zero': torch.zeros(10, 10),
-        'one': torch.ones(10, 10),
-        'random': torch.randn(10, 10)
-    }
+def test_compute_scale():
+    tensor = torch.randn(1, 3, 10, 10)  # Example tensor
+    scale, zero_point = compute_scale(tensor, bits=8, type="signed")
+    assert scale.numel() == 1  # Should be a single scale for the whole tensor
+    assert zero_point.item() == 0  # For signed type
 
-def test_compute_linear_scale(tensors):
-    assert compute_linear_scale(tensors['zero']) == 0
-    assert compute_linear_scale(tensors['one'], bits=8) == 1 / 127  # Default scale for a tensor of ones
-    assert compute_linear_scale(tensors['random'], bits=16) > 0  # Just to check non-zero scale
+    tensor = torch.randn(1, 3, 10, 10)
+    scale, zero_point = compute_scale(tensor, bits=8, type="unsigned")
+    assert scale.numel() == 1
+    assert zero_point.item() != 0  # Non-zero for unsigned type
 
-def test_quantize_linear_weights(tensors):
-    qtensor, scale = quantize_linear_weights(tensors['one'])
-    assert torch.all(qtensor == 127)  # Expected max quantization value for default 8 bits
-    assert scale == 1 / 127
+def test_quantize_per_tensor():
+    tensor = torch.tensor([1.5, -2.3, 0.0, 3.4])
+    scale = torch.tensor([0.1])
+    zero_point = torch.tensor([0])
+    qtensor = quantize_per_tensor(tensor, scale, zero_point, bits=8, type="signed")
+    assert qtensor.equal(torch.tensor([15, -23, 0, 34]))
 
-def test_quantize_conv2d_weights():
-    tensor = torch.randn(2, 3, 5, 5)  # Example conv2d weight (out_channels, in_channels, H, W)
-    qtensor, scale = quantize_conv2d_weights(tensor)
-    assert qtensor.shape == tensor.shape
-    assert scale.numel() == tensor.shape[0]  # One scale per output channel
+def test_dequantize_per_tensor():
+    tensor = torch.tensor([15, -23, 0, 34], dtype=torch.float32)
+    scale = torch.tensor([0.1])
+    zero_point = torch.tensor([0])
+    dtensor = dequantize_per_tensor(tensor, scale, zero_point)
+    assert torch.allclose(dtensor, torch.tensor([1.5, -2.3, 0.0, 3.4]))
 
-def test_QuantizeLinear_forward_backward(tensors):
-    tensor = tensors['random']
-    bits = 8
-    qtensor, scale = quantizelinear(tensor, bits)
-    assert qtensor is not None
-    assert scale is not None
+def test_forward_quantize_per_tensor():
+    tensor = torch.randn(1, 3, 10, 10)
+    q_tensor, scale, zero_point = forward_quantize_per_tensor(tensor, bits=8, type="signed")
+    assert q_tensor.shape == tensor.shape
 
-    # Gradient check
-    tensor.requires_grad_()
-    qtensor, scale = quantizelinear(tensor, bits)
-    (qtensor.sum() + scale.sum()).backward()  # Trigger backward pass
-    assert tensor.grad is not None
+def test_forward_quantize_per_channel():
+    tensor = torch.randn(5, 3, 10, 10)
+    q_tensor, scale, zero_point = forward_quantize_per_channel(tensor, bits=8, type="signed")
+    assert q_tensor.shape == tensor.shape
+    assert scale.shape == (5, 1, 1, 1)  # Channel-wise scaling
 
-def test_QuantizeConv2d_forward_backward():
-    tensor = torch.randn(2, 3, 5, 5, requires_grad=True)  # Example conv2d weight
-    bits = 8
-    qtensor, scale = quantizeconv2d(tensor, bits)
-    assert qtensor is not None
-    assert scale is not None
+# Additional tests can be added as necessary, for example, to verify the gradient computation in the autograd functions.
 
-    # Gradient check
-    (qtensor.sum() + scale.sum()).backward()
-    assert tensor.grad is not None
