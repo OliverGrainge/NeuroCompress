@@ -13,13 +13,13 @@ from NeuroPress.Utils import get_device
 
 # Hyperparameters
 batch_size = 512
-epochs = 3
+epochs = 1
 learning_rate = 0.01
 
 # Setting the device
 device = get_device()
 
-qconv = Q.Conv2dW8A8
+qconv = Q.Conv2dW4A8
 qlinear = Q.LinearW8A16
 
 class CNN(nn.Module):
