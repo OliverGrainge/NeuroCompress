@@ -1,12 +1,13 @@
 import pytest
 import torch
-from NeuroPress.QLayers import (
-    Conv2dW1A16,
-    StochastiConv2dW1A16,
-    Conv2dW1A1,
-    StochastiConv2dW1A1,
-)
 import torch.nn.functional as F
+
+from NeuroPress.QLayers import (
+    Conv2dW1A1,
+    Conv2dW1A16,
+    StochastiConv2dW1A1,
+    StochastiConv2dW1A16,
+)
 
 # Constants for tests
 IN_CHANNELS = 3

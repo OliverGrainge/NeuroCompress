@@ -1,13 +1,15 @@
+import os
+import sys
+
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-import sys 
 import torch.nn.functional as F
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+from tqdm import tqdm
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import NeuroPress.QLayers as Q
 from NeuroPress.Utils import get_device
 
@@ -21,6 +23,7 @@ device = get_device()
 
 qconv = Q.Conv2dW4A8
 qlinear = Q.LinearW8A16
+
 
 class CNN(nn.Module):
     def __init__(self):
@@ -39,7 +42,7 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(1024, 512)
         self.fcbn2 = nn.BatchNorm1d(512)
         self.fc3 = nn.Linear(512, 10)
-        
+
     def forward(self, x):
         x = F.relu(self.bn1(self.pool(self.conv1(x))))
         x = F.relu(self.bn2(self.pool(self.conv2(x))))
@@ -60,26 +63,28 @@ def postquantize(model: nn.Module):
             setattr(model, name, new_layer)
         elif isinstance(layer, nn.Conv2d):
             has_bias = False if layer.bias is None else True
-            new_layer = qconv(layer.in_channels,
-                              layer.out_channels, 
-                              layer.kernel_size,
-                              stride=layer.stride,
-                              padding=layer.padding,
-                              dilation=layer.dilation,
-                              groups=layer.groups,
-                              bias=has_bias)
+            new_layer = qconv(
+                layer.in_channels,
+                layer.out_channels,
+                layer.kernel_size,
+                stride=layer.stride,
+                padding=layer.padding,
+                dilation=layer.dilation,
+                groups=layer.groups,
+                bias=has_bias,
+            )
             new_layer.setup(layer)
             setattr(model, name, new_layer)
 
 
-
 # Data loading with transforms
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.1307,), (0.3081,))
-])
-train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-test_dataset = datasets.MNIST(root='./data', train=False, transform=transform)
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+)
+train_dataset = datasets.MNIST(
+    root="./data", train=True, download=True, transform=transform
+)
+test_dataset = datasets.MNIST(root="./data", train=False, transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -106,6 +111,7 @@ def train_model(model, optimizer, criterion):
                 tepoch.set_postfix(loss=loss.item())
     return model
 
+
 # Function to evaluate the model
 def evaluate_model(model):
     model.eval()
@@ -120,8 +126,11 @@ def evaluate_model(model):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-    accuracy = 100. * correct / len(test_loader.dataset)
-    print(f'Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)')
+    accuracy = 100.0 * correct / len(test_loader.dataset)
+    print(
+        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)"
+    )
+
 
 # Train and evaluate the model
 train_model(model, optimizer, criterion)
@@ -129,5 +138,5 @@ evaluate_model(model)
 postquantize(model)
 print(model)
 evaluate_model(model)
-#train_model(model, optimizer, criterion)
-#evaluate_model(model)
+# train_model(model, optimizer, criterion)
+# evaluate_model(model)

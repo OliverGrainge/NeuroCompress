@@ -1,7 +1,10 @@
-import torch
 import pytest
-from NeuroPress.QLayers.Binary.quant import SignBinarizeFunction, StochasticBinarySignFunction
+import torch
 
+from NeuroPress.QLayers.Binary.quant import (
+    SignBinarizeFunction,
+    StochasticBinarySignFunction,
+)
 
 
 def test_sign_binarize_forward():

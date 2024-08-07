@@ -1,12 +1,16 @@
 import pytest
 import torch
-from NeuroPress.QLayers import (
-    LinearW1A16,
-    StochasticLinearW1A16,
+
+from NeuroPress.QLayers import (  # Update with the correct path to LinearW1A16
     LinearW1A1,
+    LinearW1A16,
     StochasticLinearW1A1,
-)  # Update with the correct path to LinearW1A16
-from NeuroPress.QLayers.Binary.quant import SignBinarizeFunction, StochasticBinarySignFunction
+    StochasticLinearW1A16,
+)
+from NeuroPress.QLayers.Binary.quant import (
+    SignBinarizeFunction,
+    StochasticBinarySignFunction,
+)
 
 # Constants for test
 IN_FEATURES = 10

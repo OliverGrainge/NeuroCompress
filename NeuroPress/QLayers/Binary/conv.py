@@ -1,6 +1,8 @@
+import math
+
 import torch
 import torch.nn as nn
-import math
+
 from .quant import SignBinarizeFunction, StochasticBinarySignFunction
 
 

@@ -1,29 +1,40 @@
+import os
+import sys
+
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-import sys
-import os 
 import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+from tqdm import tqdm
 
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from NeuroPress.QLayers import LinearW1A16, StochasticLinearW1A16, LinearW1A1, StochasticLinearW1A1, LinearW8A16, LinearW4A16, LinearW8A8, LinearW4A16, LinearW4A8, LinearW2A16, LinearW2A8
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from NeuroPress.QLayers import (
+    LinearW1A1,
+    LinearW1A16,
+    LinearW2A8,
+    LinearW2A16,
+    LinearW4A8,
+    LinearW4A16,
+    LinearW8A8,
+    LinearW8A16,
+    StochasticLinearW1A1,
+    StochasticLinearW1A16,
+)
 from NeuroPress.Utils import get_device
-
 
 # Hyperparameters
 input_size = 784  # MNIST images are 28x28 pixels
-hidden_sizes = [128, 64] # hidden layer sizes of the network 
-output_size = 10   # 10 classes for the digits 0-9
-batch_size = 512   # You can modify this as needed
-epochs = 3       # Number of training epochs
-learning_rate = 0.01 # learning rate
-device = get_device() # Setting the device
+hidden_sizes = [128, 64]  # hidden layer sizes of the network
+output_size = 10  # 10 classes for the digits 0-9
+batch_size = 512  # You can modify this as needed
+epochs = 3  # Number of training epochs
+learning_rate = 0.01  # learning rate
+device = get_device()  # Setting the device
 
-qlayer = LinearW8A8 # qunatized layer example
+qlayer = LinearW8A8  # qunatized layer example
+
 
 class MLP(nn.Module):
     def __init__(self):
@@ -50,10 +61,17 @@ def postquantize(model: nn.Module, qlayer: nn.Linear):
             new_layer.setup(layer)
             setattr(model, name, new_layer)
 
+
 # Data loading
-transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+)
+train_dataset = datasets.MNIST(
+    root="./data", train=True, download=True, transform=transform
+)
+test_dataset = datasets.MNIST(
+    root="./data", train=False, download=True, transform=transform
+)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
@@ -61,6 +79,7 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=Fa
 Qmodel = MLP().to(device)
 Qcriterion = nn.CrossEntropyLoss()
 Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
+
 
 # Training the model
 def train_model(model, optimizer, criterion):
@@ -77,6 +96,7 @@ def train_model(model, optimizer, criterion):
                 optimizer.step()
                 tepoch.set_postfix(loss=loss.item())
     return model
+
 
 # Evaluating the model
 def evaluate_model(model, criterion):
@@ -95,8 +115,10 @@ def evaluate_model(model, criterion):
                 correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-    accuracy = 100. * correct / len(test_loader.dataset)
-    print(f'Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)')
+    accuracy = 100.0 * correct / len(test_loader.dataset)
+    print(
+        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)"
+    )
 
 
 train_model(Qmodel, Qoptimizer, Qcriterion)
@@ -106,5 +128,3 @@ print(Qmodel)
 evaluate_model(Qmodel, Qcriterion)
 train_model(Qmodel, Qoptimizer, Qcriterion)
 evaluate_model(Qmodel, Qcriterion)
-
-
