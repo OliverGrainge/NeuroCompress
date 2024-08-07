@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from NeuroPress.QLayers import LinearW1A16, StochasticLinearW1A16, LinearW1A1, StochasticLinearW1A1, LinearW8A16, LinearW4A16, LinearW8A8, LinearW4A16, LinearW4A8
+from NeuroPress.QLayers import LinearW1A16, StochasticLinearW1A16, LinearW1A1, StochasticLinearW1A1, LinearW8A16, LinearW4A16, LinearW8A8, LinearW4A16, LinearW4A8, LinearW2A16, LinearW2A8
 from NeuroPress.Utils import get_device
 
 
@@ -23,7 +23,7 @@ epochs = 3       # Number of training epochs
 learning_rate = 0.01 # learning rate
 device = get_device() # Setting the device
 
-qlayer = LinearW4A8 # qunatized layer example
+qlayer = LinearW8A8 # qunatized layer example
 
 class MLP(nn.Module):
     def __init__(self):
@@ -42,7 +42,7 @@ class MLP(nn.Module):
         return x
 
 
-def postquantize(model: nn.Module, qlaayer: nn.Linear):
+def postquantize(model: nn.Module, qlayer: nn.Linear):
     for name, layer in model.named_modules():
         if isinstance(layer, nn.Linear):
             has_bias = False if layer.bias is None else True
@@ -103,6 +103,8 @@ train_model(Qmodel, Qoptimizer, Qcriterion)
 evaluate_model(Qmodel, Qcriterion)
 postquantize(Qmodel, qlayer)
 print(Qmodel)
+evaluate_model(Qmodel, Qcriterion)
+train_model(Qmodel, Qoptimizer, Qcriterion)
 evaluate_model(Qmodel, Qcriterion)
 
 
