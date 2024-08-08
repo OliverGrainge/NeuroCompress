@@ -10,30 +10,21 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from NeuroPress.QLayers import (
-    LinearW1A1,
-    LinearW1A16,
-    LinearW2A8,
-    LinearW2A16,
-    LinearW4A8,
-    LinearW4A16,
-    LinearW8A8,
-    LinearW8A16,
-    StochasticLinearW1A1,
-    StochasticLinearW1A16,
-)
+import NeuroPress.QLayers as Q
 from NeuroPress.Utils import get_device
+
+torch.manual_seed(42)
 
 # Hyperparameters
 input_size = 784  # MNIST images are 28x28 pixels
 hidden_sizes = [128, 64]  # hidden layer sizes of the network
 output_size = 10  # 10 classes for the digits 0-9
 batch_size = 512  # You can modify this as needed
-epochs = 3  # Number of training epochs
+epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
 device = get_device()  # Setting the device
 
-qlayer = LinearW8A8  # qunatized layer example
+qlayer = Q.LinearWTA16  # qunatized layer example
 
 
 class MLP(nn.Module):
@@ -126,5 +117,6 @@ evaluate_model(Qmodel, Qcriterion)
 postquantize(Qmodel, qlayer)
 print(Qmodel)
 evaluate_model(Qmodel, Qcriterion)
+Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
 train_model(Qmodel, Qoptimizer, Qcriterion)
 evaluate_model(Qmodel, Qcriterion)
