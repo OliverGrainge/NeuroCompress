@@ -53,6 +53,3 @@ def test_forward_quantize_per_channel():
     )
     assert q_tensor.shape == tensor.shape
     assert scale.shape == (5, 1, 1, 1)  # Channel-wise scaling
-
-
-# Additional tests can be added as necessary, for example, to verify the gradient computation in the autograd functions.

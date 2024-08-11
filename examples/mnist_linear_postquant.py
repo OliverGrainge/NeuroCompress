@@ -24,17 +24,18 @@ epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
 device = get_device()  # Setting the device
 
-qlayer = Q.LinearWTA16  # qunatized layer example
+qlayer = Q.LinearWTA16_TTN  # qunatized layer example
+layer = nn.Linear
 
 
 class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_sizes[0])
+        self.fc1 = layer(input_size, hidden_sizes[0])
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
+        self.fc2 = layer(hidden_sizes[0], hidden_sizes[1])
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(hidden_sizes[1], output_size)
+        self.fc3 = layer(hidden_sizes[1], output_size)
 
     def forward(self, x):
         x = x.view(-1, 784)  # Flatten the image
@@ -115,7 +116,6 @@ def evaluate_model(model, criterion):
 train_model(Qmodel, Qoptimizer, Qcriterion)
 evaluate_model(Qmodel, Qcriterion)
 postquantize(Qmodel, qlayer)
-print(Qmodel)
 evaluate_model(Qmodel, Qcriterion)
 Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
 train_model(Qmodel, Qoptimizer, Qcriterion)

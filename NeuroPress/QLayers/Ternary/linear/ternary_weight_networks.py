@@ -1,5 +1,8 @@
 import numpy as np
 import torch
+import torch.nn as nn
+
+from .base import BaseLinear
 
 # =================== Ternary Weight Networks =======================
 # URL: https://arxiv.org/pdf/1605.04711
@@ -24,7 +27,7 @@ def threshold_projection_rowise_vector(
     return new_tensor
 
 
-def compute_scale_twn(weights, per_channel=False):
+def compute_scale_twn_rowise(weights, per_channel=False):
     n = weights[0].nelement()
     scale = 0.75 * torch.sum(weights.abs(), dim=(1,)) / n
     Alpha = []
@@ -40,10 +43,18 @@ def compute_scale_twn(weights, per_channel=False):
     return scale.view(-1, 1), alpha
 
 
+def compute_scale_twn(weights):
+    n = weights[0].nelement()
+    scale = 0.75 * weights.abs().mean()
+    mask = torch.logical_or(weights > scale, weights < -scale)
+    alpha = (1 / mask.sum()) * weights[mask].sum()
+    return alpha, scale
+
+
 class QuantizeTWN(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x):
-        scale, alpha = compute_scale_twn(x)
+        scale, alpha = compute_scale_twn_rowise(x)
         q_x = threshold_projection_rowise_vector(x, scale)
         return q_x, scale, alpha
 
@@ -53,28 +64,22 @@ class QuantizeTWN(torch.autograd.Function):
         return grad_input, None, None
 
 
-def setupTWN():
-    return None
+def forward_quantize_twn(tensor: torch.tensor):
+    return QuantizeTWN.apply(tensor)
 
 
-def forward_quantize_twn(tensor: torch.tensor, scale: torch.tensor):
-    return QuantizeTWN.apply(tensor, scale)
+# ============================ Linear Function ================================
 
 
-# ==================================================================
+class LinearWTA16_TWN(BaseLinear):
+    def __init__(self, in_features, out_features, bias=True):
+        super(LinearWTA16_TWN, self).__init__(in_features, out_features, bias=bias)
 
-# ==================================================================
-
-
-def forward_quantize(tensor: torch.tensor, method: str, quant_params):
-    if method.lower() == "twn":
-        return QuantizeTWN.apply(tensor)
-    else:
-        raise NotImplementedError
-
-
-def setup_quantize(method: str):
-    if method == "twn":
-        return setupTWN()
-    else:
-        raise NotImplementedError
+    def forward(self, x):
+        q_weight, scale, alpha = forward_quantize_twn(self.weight)
+        out = alpha.view(1, -1).repeat(x.shape[0], 1) * nn.functional.linear(
+            x, q_weight
+        )
+        if self.bias is not None:
+            out += self.bias
+        return out

@@ -1,0 +1,2 @@
+from .ternary_trainable_networks import LinearWTA16_TTN
+from .ternary_weight_networks import LinearWTA16_TWN
