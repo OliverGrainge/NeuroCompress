@@ -1,39 +1,34 @@
+import projection as proj
 import torch
+import torch.autograd.Function as Function
+import torch.nn.functional as F
 
 
-class SignBinarizeFunction(torch.autograd.Function):
+class binarize_deterministic_clipped_ste(Function):
     @staticmethod
     def forward(ctx, x):
         ctx.save_for_backward(x)
-        return torch.where(
-            x > 0,
-            torch.tensor(1.0, device=x.device),
-            torch.tensor(-1.0, device=x.device),
-        )
+        return proj.deterministic(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        (x,) = ctx.saved_tensors
-        grad_input = grad_output.clone()
-        grad_input = torch.clamp(grad_input, -1, 1)
-        return grad_input
+    def backward(ctx, grad_outputs):
+        x = ctx.saved_tensors
+        mask = torch.abs(x) < 1
+        grad_inputs = grad_outputs.clone()
+        grad_inputs[mask] = 0.0
+        return grad_inputs
 
 
-class StochasticBinarySignFunction(torch.autograd.Function):
+class binarize_stochastic_clipped_ste(Function):
     @staticmethod
-    def forward(ctx, input, temp=10000.0):
-        ctx.save_for_backward(input)
-        input = input * temp
-        prob = torch.sigmoid((input + 1) / 2)  # Use sigmoid to smooth the transition
-        return torch.where(
-            torch.rand_like(input) < prob,
-            torch.tensor(1.0, device=input.device),
-            torch.tensor(-1.0, device=input.device),
-        )
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return proj.stochastic(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        (input,) = ctx.saved_tensors
-        grad_input = grad_output.clone()
-        grad_input = torch.clamp(grad_input, -1, 1)
-        return grad_input
+    def backward(ctx, grad_outputs):
+        x = ctx.saved_tensors
+        mask = torch.abs(x) < 1
+        grad_inputs = grad_outputs.clone()
+        grad_inputs[mask] = 0.0
+        return grad_inputs
