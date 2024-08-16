@@ -24,7 +24,7 @@ epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
 device = get_device()  # Setting the device
 
-qlayer = Q.LinearW1A16  # qunatized layer example
+qlayer = Q.LinearWTA16  # qunatized layer example
 layer = nn.Linear
 
 

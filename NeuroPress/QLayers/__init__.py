@@ -13,6 +13,6 @@ from .Integer import (
     LinearW8A8,
     LinearW8A16,
 )
-from .Ternary import LinearWTA16_TTN, LinearWTA16_TWN
+from .Ternary import LinearWTA16
 
 ALL_INTQLAYERS = (LinearW8A16, LinearW4A16, LinearW8A8, LinearW4A8)
