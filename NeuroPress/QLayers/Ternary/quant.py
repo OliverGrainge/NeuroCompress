@@ -28,8 +28,8 @@ class ternarize_ttn(Function):
     def backward(ctx, grad_qtensor, grad_wp, grad_wn):
         pos_mask, neg_mask, wp, wn = ctx.saved_tensors
         grad_input = grad_qtensor.clone()
-        wp = wp.unsqueeze(1).expand(-1, grad_input.shape[1])
-        wn = wn.unsqueeze(1).expand(-1, grad_input.shape[1])
+        wp = torch.ones_like(grad_qtensor) * wp.view(-1, *torch.ones(grad_qtensor.ndim - 1).type(torch.int))
+        wn = torch.ones_like(grad_qtensor) * wn.view(-1, *torch.ones(grad_qtensor.ndim - 1).type(torch.int))
         grad_input[pos_mask] *= wp[pos_mask]
         grad_input[neg_mask] *= wn[neg_mask]
         grad_wp_input, grad_wn_input = grad_wp.clone(), grad_wn.clone()

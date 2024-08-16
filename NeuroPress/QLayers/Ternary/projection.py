@@ -21,8 +21,8 @@ def learned(tensor: torch.tensor, wp: torch.tensor, wn: torch.tensor, t=0.05):
     qtensor_pos_mask = tensor > delta.view(-1, *torch.ones(tensor.ndim - 1).type(torch.int))
     qtensor_neg_mask = tensor < -delta.view(-1, *torch.ones(tensor.ndim - 1).type(torch.int))
     qtensor = torch.zeros_like(tensor)
-    wp = wp.unsqueeze(1).expand(-1, tensor.shape[1])
-    wn = wn.unsqueeze(1).expand(-1, tensor.shape[1])
+    wp = torch.ones_like(qtensor) * wp.view(-1, *torch.ones(qtensor.ndim - 1).type(torch.int))
+    wn = torch.ones_like(qtensor) * wn.view(-1, *torch.ones(qtensor.ndim - 1).type(torch.int))
     qtensor[qtensor_pos_mask] = wp[qtensor_pos_mask]
     qtensor[qtensor_neg_mask] = wn[qtensor_neg_mask]
     return qtensor, qtensor_pos_mask, qtensor_neg_mask

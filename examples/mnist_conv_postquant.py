@@ -22,7 +22,7 @@ learning_rate = 0.01
 device = get_device()
 
 qconv = Q.Conv2dWTA16
-qlinear = Q.LinearW4A16
+qlinear = Q.LinearW4A8
 
 
 class CNN(nn.Module):
@@ -130,7 +130,6 @@ def evaluate_model(model):
 train_model(model, optimizer, criterion)
 evaluate_model(model)
 postquantize(model)
-print(model)
 evaluate_model(model)
 train_model(model, optimizer, criterion)
 evaluate_model(model)
