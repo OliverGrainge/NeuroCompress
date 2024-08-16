@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from NeuroPress.QLayers.Binary.quant import (
+from NeuroPress.QLayers.Binary.projection import (
     SignBinarizeFunction,
     StochasticBinarySignFunction,
 )

@@ -21,7 +21,7 @@ learning_rate = 0.01
 # Setting the device
 device = get_device()
 
-qconv = Q.Conv2dW1A1
+qconv = Q.Conv2dWTA16
 qlinear = Q.LinearW4A16
 
 

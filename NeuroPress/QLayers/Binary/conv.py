@@ -145,7 +145,6 @@ class Conv2dW1A1(BaseBinaryConv2d):
             )
         )
 
-        #
         if self.bias is not None:
             out += self.bias.view(1, -1, 1, 1)
         return out

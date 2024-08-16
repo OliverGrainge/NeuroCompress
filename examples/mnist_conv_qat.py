@@ -16,9 +16,6 @@ from NeuroPress.QLayers import (
     LinearW1A1,
     LinearW1A16,
     LinearW8A16,
-    StochasticLinearW1A16,
-    StochastiConv2dW1A1,
-    StochastiConv2dW1A16,
 )
 from NeuroPress.Utils import get_device
 

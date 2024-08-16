@@ -7,7 +7,7 @@ from NeuroPress.QLayers import (  # Update with the correct path to LinearW1A16
     StochasticLinearW1A1,
     StochasticLinearW1A16,
 )
-from NeuroPress.QLayers.Binary.quant import (
+from NeuroPress.QLayers.Binary.projection import (
     SignBinarizeFunction,
     StochasticBinarySignFunction,
 )
