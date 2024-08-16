@@ -28,9 +28,7 @@ def test_weight_only_quant_init():
 
 
 def test_full_quant_init():
-    conv = FullQuant(
-        3, 16, 3, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed"
-    )
+    conv = FullQuant(3, 16, 3, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
     assert conv.in_channels == 3
     assert conv.out_channels == 16
     assert conv.act_bits == 8
@@ -45,9 +43,7 @@ def test_weight_only_quant_forward():
 
 
 def test_full_quant_forward():
-    conv = FullQuant(
-        3, 16, 3, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed"
-    )
+    conv = FullQuant(3, 16, 3, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
     input_tensor = torch.randn(1, 3, 32, 32)
     output = conv(input_tensor)
     assert output.size() == (1, 16, 30, 30)  # Expected size with default settings
@@ -74,9 +70,7 @@ def test_specific_weight_only_quant_layers(
     bits,
     type,
 ):
-    conv = class_type(
-        in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias
-    )
+    conv = class_type(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias)
     assert conv.bits == bits
     assert conv.type == type
     input_tensor = torch.randn(1, in_channels, 32, 32)

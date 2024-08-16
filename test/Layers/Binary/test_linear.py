@@ -53,18 +53,14 @@ def test_stochastic_binary_linear_forward(stochastic_binary_linear):
     assert output.shape == (1, OUT_FEATURES)
 
 
-@pytest.mark.parametrize(
-    "data", [torch.tensor([0.1, -0.2, 0.3, -0.4]), torch.tensor([1, -1, 2, -2])]
-)
+@pytest.mark.parametrize("data", [torch.tensor([0.1, -0.2, 0.3, -0.4]), torch.tensor([1, -1, 2, -2])])
 def test_sign_binarize_function(data):
     result = SignBinarizeFunction.apply(data)
     expected = torch.tensor([1.0, -1.0, 1.0, -1.0])
     assert torch.equal(result, expected)
 
 
-@pytest.mark.parametrize(
-    "data", [torch.tensor([0.1, -0.2, 0.3, -0.4]), torch.tensor([1, -1, 2, -2])]
-)
+@pytest.mark.parametrize("data", [torch.tensor([0.1, -0.2, 0.3, -0.4]), torch.tensor([1, -1, 2, -2])])
 def test_stochastic_binary_sign_function(data):
     result = StochasticBinarySignFunction.apply(data)
     # Since it is stochastic, we only check for valid binary outputs
@@ -112,11 +108,7 @@ def test_stochastic_linear_w1a1_forward(stochastic_linear_w1a1):
     output = stochastic_linear_w1a1.forward(x)
     assert output.shape == (1, OUT_FEATURES)
     # Since stochastic, check that output is valid
-    stochastic_weight_tests = StochasticBinarySignFunction.apply(
-        stochastic_linear_w1a1.weight
-    )
+    stochastic_weight_tests = StochasticBinarySignFunction.apply(stochastic_linear_w1a1.weight)
     stochastic_input_tests = StochasticBinarySignFunction.apply(x)
-    assert torch.all(
-        (stochastic_weight_tests == 1.0) | (stochastic_weight_tests == -1.0)
-    )
+    assert torch.all((stochastic_weight_tests == 1.0) | (stochastic_weight_tests == -1.0))
     assert torch.all((stochastic_input_tests == 1.0) | (stochastic_input_tests == -1.0))

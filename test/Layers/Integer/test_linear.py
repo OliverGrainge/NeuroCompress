@@ -27,9 +27,7 @@ def test_weight_only_quant_init():
 
 
 def test_full_quant_init():
-    layer = FullQuant(
-        10, 5, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed"
-    )
+    layer = FullQuant(10, 5, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
     assert layer.in_features == 10
     assert layer.out_features == 5
     assert layer.act_bits == 8
@@ -45,9 +43,7 @@ def test_weight_only_quant_forward():
 
 def test_full_quant_forward():
     in_tensor = torch.randn(1, 10)
-    layer = FullQuant(
-        10, 5, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed"
-    )
+    layer = FullQuant(10, 5, act_bits=8, weight_bits=8, weight_type="signed", act_type="signed")
     output = layer(in_tensor)
     assert output.shape == (1, 5)
 
@@ -70,9 +66,7 @@ def test_specific_quant_layers():
         (LinearW2A16, 10, 5, 2, "unsigned"),
     ],
 )
-def test_various_weight_only_quant_layers(
-    class_type, in_features, out_features, bits, type
-):
+def test_various_weight_only_quant_layers(class_type, in_features, out_features, bits, type):
     layer = class_type(in_features, out_features)
     assert layer.bits == bits
     assert layer.type == type

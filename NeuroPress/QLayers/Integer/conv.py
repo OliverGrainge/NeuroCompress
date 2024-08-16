@@ -79,12 +79,8 @@ class WeightOnlyQuant(BaseConv2d):
         self.type = type
 
     def forward(self, x):
-        q_weights, scale, zero_point = forward_quantize_per_channel(
-            self.weight, bits=self.bits, type=self.type
-        )
-        q_bias = quantize_per_tensor(
-            self.bias, scale.max(), zero_point.min(), bits=self.bits, type=self.type
-        )
+        q_weights, scale, zero_point = forward_quantize_per_channel(self.weight, bits=self.bits, type=self.type)
+        q_bias = quantize_per_tensor(self.bias, scale.max(), zero_point.min(), bits=self.bits, type=self.type)
         dq_weights = dequantize_per_channel(q_weights, scale, zero_point)
         dq_bias = dequantize_per_tensor(q_bias, scale.max(), zero_point.min())
         out = nn.functional.conv2d(
@@ -131,12 +127,8 @@ class FullQuant(BaseConv2d):
         self.act_type = act_type
 
     def forward(self, x):
-        q_weights, scale_w, zero_point_w = forward_quantize_per_tensor(
-            self.weight, bits=self.weight_bits, type=self.weight_type
-        )
-        q_x, scale_x, zero_point_x = forward_quantize_per_tensor(
-            x, bits=self.act_bits, type=self.act_type
-        )
+        q_weights, scale_w, zero_point_w = forward_quantize_per_tensor(self.weight, bits=self.weight_bits, type=self.weight_type)
+        q_x, scale_x, zero_point_x = forward_quantize_per_tensor(x, bits=self.act_bits, type=self.act_type)
         q_bias = (
             quantize_per_tensor(
                 self.bias,

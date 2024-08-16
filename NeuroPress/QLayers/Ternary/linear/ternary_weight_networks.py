@@ -8,9 +8,7 @@ from .base import BaseLinear
 # URL: https://arxiv.org/pdf/1605.04711
 
 
-def threshold_projection_rowise_vector(
-    tensor: torch.Tensor, scale: torch.Tensor
-) -> torch.Tensor:
+def threshold_projection_rowise_vector(tensor: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
     expanded_scale = scale.expand_as(tensor)
     gt_scale = tensor > expanded_scale
     lt_negative_scale = tensor < -expanded_scale
@@ -77,9 +75,7 @@ class LinearWTA16_TWN(BaseLinear):
 
     def forward(self, x):
         q_weight, scale, alpha = forward_quantize_twn(self.weight)
-        out = alpha.view(1, -1).repeat(x.shape[0], 1) * nn.functional.linear(
-            x, q_weight
-        )
+        out = alpha.view(1, -1).repeat(x.shape[0], 1) * nn.functional.linear(x, q_weight)
         if self.bias is not None:
             out += self.bias
         return out

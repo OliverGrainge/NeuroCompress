@@ -27,17 +27,13 @@ def stochastic(tensor: torch.tensor, per_channel=True):
     return qtensor, alpha
 
 
-def xnor_net_activation_quant(
-    tensor: torch.tensor, kernel_size, stride, padding, dilation, groups
-):
+def xnor_net_activation_quant(tensor: torch.tensor, kernel_size, stride, padding, dilation, groups):
     qtensor = torch.where(tensor > 0, torch.tensor(1.0), torch.tensor(-1.0))
     spatial_norms = (
-        tensor.T.reshape(tensor.shape[2], tensor.shape[3], -1)
-        .abs()
-        .mean(2)
-        .unsqueeze(0)
+        tensor.permute(*torch.arange(tensor.ndim - 1, -1, -1)).reshape(tensor.shape[2], tensor.shape[3], -1).abs().mean(2).unsqueeze(0)
     )
     kernel = torch.ones(kernel_size) / (kernel_size[0] * kernel_size[1])
+    kernel = kernel.unsqueeze(0).unsqueeze(0).to(spatial_norms.device)
     alpha = F.conv2d(
         spatial_norms,
         kernel,

@@ -1,7 +1,8 @@
-import quant as Q
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+import NeuroPress.QLayers.Binary.quant as Q
 
 
 def get_binarize(projection="deterministic", backward="ste"):
@@ -9,6 +10,8 @@ def get_binarize(projection="deterministic", backward="ste"):
         return Q.binarize_deterministic_clipped_ste
     elif projection == "stochastic" and backward == "clipeed_ste":
         return Q.binarize_stochastic_clipped_ste
+    elif projection == "xnor":
+        return Q.binarize_spatialconv_clipped_ste
     else:
         raise NotImplementedError
 
@@ -75,7 +78,7 @@ class Conv2dW1A16(BaseBinaryConv2d):
         self.per_channel = per_channel
 
     def forward(self, x):
-        qw, alpha = self.binarize.apply(self.weight, per_channel=self.per_channel)
+        qw, alpha = self.binarize.apply(self.weight)
         return alpha.view(1, len(alpha), 1, 1) * F.conv2d(
             x,
             qw,
@@ -114,18 +117,19 @@ class Conv2dW1A1(BaseBinaryConv2d):
             bias,
             padding_mode,
         )
-        self.binarize = get_binarize(projection=projection, backward=backward)
+        self.binarize_weight = get_binarize(projection=projection, backward=backward)
+        self.binarize_activation = get_binarize(projection="xnor")
         self.per_channel = per_channel
 
     def forward(self, x):
-        qw, alpha_w = self.binarize.apply(x, per_channel=self.per_channel)
-        qx, alpha_x = Q.xnor_net_activation_quant(
+        qw, alpha_w = self.binarize_weight.apply(self.weight)
+        qx, alpha_x = self.binarize_activation.apply(
             x,
             self.kernel_size,
-            stride=self.stride,
-            padding=self.padding,
-            dilation=self.dilation,
-            groups=self.groups,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.groups,
         )
         out = (
             alpha_w.view(1, len(alpha_w), 1, 1)
@@ -140,6 +144,8 @@ class Conv2dW1A1(BaseBinaryConv2d):
                 groups=self.groups,
             )
         )
+
+        #
         if self.bias is not None:
             out += self.bias.view(1, -1, 1, 1)
         return out

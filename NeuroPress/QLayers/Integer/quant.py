@@ -1,21 +1,15 @@
 import torch
 
 
-def compute_scale(
-    tensor: torch.Tensor, bits=8, type: str = "signed", per_channel=False
-):
+def compute_scale(tensor: torch.Tensor, bits=8, type: str = "signed", per_channel=False):
     if per_channel:
         max_per_channel = tensor.abs().view(tensor.shape[0], -1).max(dim=1)[0]
         scale = max_per_channel / (2 ** (bits - 1) - 1)
         scale = scale.view(-1, 1, 1, 1)
         if type == "signed":
-            return scale.to(tensor.device), torch.zeros(
-                scale.shape[0], dtype=torch.int
-            ).view(-1, 1, 1, 1).to(tensor.device)
+            return scale.to(tensor.device), torch.zeros(scale.shape[0], dtype=torch.int).view(-1, 1, 1, 1).to(tensor.device)
         else:
-            zero_point = -torch.round(
-                tensor.view(tensor.shape[0], -1).min(dim=1)[0] / scale[0]
-            ).view(-1, 1, 1, 1)
+            zero_point = -torch.round(tensor.view(tensor.shape[0], -1).min(dim=1)[0] / scale[0]).view(-1, 1, 1, 1)
             return scale.to(tensor.device), zero_point.to(tensor.device)
 
     real_range = tensor.abs().max()
@@ -40,9 +34,7 @@ def dequantize_per_channel(tensor: torch.Tensor, scale: float, zero_point: int):
     return scale * (tensor - zero_point)
 
 
-def quantize_per_tensor(
-    tensor: torch.Tensor, scale: float, zero_point: int, bits: int, type: str
-):
+def quantize_per_tensor(tensor: torch.Tensor, scale: float, zero_point: int, bits: int, type: str):
     if tensor is None:
         return None
     if type == "signed":

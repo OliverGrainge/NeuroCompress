@@ -70,12 +70,8 @@ class BinaryCNN(nn.Module):
 
 
 # Data loading with transforms
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-)
-train_dataset = datasets.MNIST(
-    root="./data", train=True, download=True, transform=transform
-)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST(root="./data", train=False, transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -119,9 +115,7 @@ def evaluate_model(model):
 
     test_loss /= len(test_loader.dataset)
     accuracy = 100.0 * correct / len(test_loader.dataset)
-    print(
-        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)"
-    )
+    print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)")
 
 
 # Train and evaluate the model

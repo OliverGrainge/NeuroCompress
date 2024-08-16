@@ -14,15 +14,15 @@ import NeuroPress.QLayers as Q
 from NeuroPress.Utils import get_device
 
 # Hyperparameters
-batch_size = 512
+batch_size = 225
 epochs = 1
 learning_rate = 0.01
 
 # Setting the device
 device = get_device()
 
-qconv = Q.Conv2dW4A8
-qlinear = Q.LinearW8A16
+qconv = Q.Conv2dW1A1
+qlinear = Q.LinearW4A16
 
 
 class CNN(nn.Module):
@@ -57,11 +57,11 @@ class CNN(nn.Module):
 def postquantize(model: nn.Module):
     for name, layer in model.named_modules():
         if isinstance(layer, nn.Linear):
-            has_bias = False if layer.bias is None else True
             new_layer = qlinear(layer.in_features, layer.out_features, has_bias)
+            has_bias = False if layer.bias is None else True
             new_layer.setup(layer)
             setattr(model, name, new_layer)
-        elif isinstance(layer, nn.Conv2d):
+        if isinstance(layer, nn.Conv2d):
             has_bias = False if layer.bias is None else True
             new_layer = qconv(
                 layer.in_channels,
@@ -78,12 +78,8 @@ def postquantize(model: nn.Module):
 
 
 # Data loading with transforms
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-)
-train_dataset = datasets.MNIST(
-    root="./data", train=True, download=True, transform=transform
-)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST(root="./data", train=False, transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -127,9 +123,7 @@ def evaluate_model(model):
 
     test_loss /= len(test_loader.dataset)
     accuracy = 100.0 * correct / len(test_loader.dataset)
-    print(
-        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)"
-    )
+    print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)")
 
 
 # Train and evaluate the model
@@ -138,5 +132,5 @@ evaluate_model(model)
 postquantize(model)
 print(model)
 evaluate_model(model)
-# train_model(model, optimizer, criterion)
-# evaluate_model(model)
+train_model(model, optimizer, criterion)
+evaluate_model(model)

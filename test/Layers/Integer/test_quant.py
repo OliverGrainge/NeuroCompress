@@ -40,16 +40,12 @@ def test_dequantize_per_tensor():
 
 def test_forward_quantize_per_tensor():
     tensor = torch.randn(1, 3, 10, 10)
-    q_tensor, scale, zero_point = forward_quantize_per_tensor(
-        tensor, bits=8, type="signed"
-    )
+    q_tensor, scale, zero_point = forward_quantize_per_tensor(tensor, bits=8, type="signed")
     assert q_tensor.shape == tensor.shape
 
 
 def test_forward_quantize_per_channel():
     tensor = torch.randn(5, 3, 10, 10)
-    q_tensor, scale, zero_point = forward_quantize_per_channel(
-        tensor, bits=8, type="signed"
-    )
+    q_tensor, scale, zero_point = forward_quantize_per_channel(tensor, bits=8, type="signed")
     assert q_tensor.shape == tensor.shape
     assert scale.shape == (5, 1, 1, 1)  # Channel-wise scaling

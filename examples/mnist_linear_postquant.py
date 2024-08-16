@@ -24,7 +24,7 @@ epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
 device = get_device()  # Setting the device
 
-qlayer = Q.LinearWTA16_TTN  # qunatized layer example
+qlayer = Q.LinearW1A16  # qunatized layer example
 layer = nn.Linear
 
 
@@ -32,15 +32,18 @@ class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
         self.fc1 = layer(input_size, hidden_sizes[0])
+        self.ln_1 = nn.LayerNorm(hidden_sizes[0])
         self.relu1 = nn.ReLU()
         self.fc2 = layer(hidden_sizes[0], hidden_sizes[1])
+        self.ln_2 = nn.LayerNorm(hidden_sizes[1])
         self.relu2 = nn.ReLU()
         self.fc3 = layer(hidden_sizes[1], output_size)
 
     def forward(self, x):
         x = x.view(-1, 784)  # Flatten the image
-        x = self.relu1(self.fc1(x))
-        x = self.relu2(self.fc2(x))
+        x = self.relu1(self.ln_1(self.fc1(x)))
+
+        x = self.relu2(self.ln_2(self.fc2(x)))
         x = self.fc3(x)
         return x
 
@@ -55,15 +58,9 @@ def postquantize(model: nn.Module, qlayer: nn.Linear):
 
 
 # Data loading
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-)
-train_dataset = datasets.MNIST(
-    root="./data", train=True, download=True, transform=transform
-)
-test_dataset = datasets.MNIST(
-    root="./data", train=False, download=True, transform=transform
-)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
+test_dataset = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
@@ -108,9 +105,7 @@ def evaluate_model(model, criterion):
 
     test_loss /= len(test_loader.dataset)
     accuracy = 100.0 * correct / len(test_loader.dataset)
-    print(
-        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)"
-    )
+    print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)")
 
 
 train_model(Qmodel, Qoptimizer, Qcriterion)

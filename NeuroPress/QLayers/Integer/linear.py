@@ -37,12 +37,8 @@ class WeightOnlyQuant(BaseLinear):
         self.type = type
 
     def forward(self, x):
-        q_weights, scale, zero_point = forward_quantize_per_tensor(
-            self.weight, bits=self.bits, type=self.type
-        )
-        q_bias = quantize_per_tensor(
-            self.bias, scale, zero_point, bits=self.bits, type=self.type
-        )
+        q_weights, scale, zero_point = forward_quantize_per_tensor(self.weight, bits=self.bits, type=self.type)
+        q_bias = quantize_per_tensor(self.bias, scale, zero_point, bits=self.bits, type=self.type)
         dq_weights = dequantize_per_tensor(q_weights, scale, zero_point)
         dq_bias = dequantize_per_tensor(q_bias, scale, zero_point)
         out = nn.functional.linear(x, dq_weights, dq_bias)
@@ -68,12 +64,8 @@ class FullQuant(BaseLinear):
         self.act_type = act_type
 
     def forward(self, x):
-        q_weights, scale_w, zero_point_w = forward_quantize_per_tensor(
-            self.weight, bits=self.weight_bits, type=self.weight_type
-        )
-        q_x, scale_x, zero_point_x = forward_quantize_per_tensor(
-            x, bits=self.act_bits, type=self.act_type
-        )
+        q_weights, scale_w, zero_point_w = forward_quantize_per_tensor(self.weight, bits=self.weight_bits, type=self.weight_type)
+        q_x, scale_x, zero_point_x = forward_quantize_per_tensor(x, bits=self.act_bits, type=self.act_type)
         q_bias = quantize_per_tensor(
             self.bias,
             scale_x * scale_w,
@@ -92,23 +84,17 @@ class FullQuant(BaseLinear):
 
 class LinearW8A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW8A16, self).__init__(
-            in_features, out_features, bias=bias, bits=8, type="signed"
-        )
+        super(LinearW8A16, self).__init__(in_features, out_features, bias=bias, bits=8, type="signed")
 
 
 class LinearW4A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW4A16, self).__init__(
-            in_features, out_features, bias=bias, bits=4, type="unsigned"
-        )
+        super(LinearW4A16, self).__init__(in_features, out_features, bias=bias, bits=4, type="unsigned")
 
 
 class LinearW2A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW2A16, self).__init__(
-            in_features, out_features, bias=bias, bits=2, type="unsigned"
-        )
+        super(LinearW2A16, self).__init__(in_features, out_features, bias=bias, bits=2, type="unsigned")
 
 
 class LinearW8A8(FullQuant):

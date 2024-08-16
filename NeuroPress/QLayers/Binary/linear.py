@@ -1,7 +1,8 @@
-import quant as Q
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+import NeuroPress.QLayers.Binary.quant as Q
 
 
 def get_binarize(projection="deterministic", backward="ste"):
@@ -38,8 +39,9 @@ class LinearW1A16(BaseBinaryLinear):
         self.per_channel = per_channel
 
     def forward(self, x):
-        qw, alpha = self.binarize.apply(self.weight, per_channel=self.per_channel)
-        return alpha.view(1, -1) * F.linear(x, qw, self.bias / alpha)
+        qw, alpha = self.binarize.apply(self.weight)
+        out = alpha.view(1, -1) * F.linear(x, qw, self.bias / alpha if self.bias is not None else None)
+        return out
 
 
 class LinearW1A1(BaseBinaryLinear):
@@ -57,9 +59,10 @@ class LinearW1A1(BaseBinaryLinear):
         self.per_channel = per_channel
 
     def forward(self, x):
-        qw, alpha_w = self.binarize.apply(self.weight, per_channel=self.per_channel)
-        qx, alpha_x = self.binarize.apply(x, per_channel=self.per_channel, batched=True)
-        out = alpha_w.view(1, -1) * alpha_x.view(-1, 1) * F.linear(qx, qw, None)
+        qw, alpha_w = self.binarize.apply(self.weight)
+        qx, alpha_x = self.binarize.apply(x)
+        out = F.linear(qx, qw, None)
+        out *= alpha_w.view(1, -1) * alpha_x.view(-1, 1)
         if self.bias is not None:
             out += self.bias.view(1, -1)
         return out

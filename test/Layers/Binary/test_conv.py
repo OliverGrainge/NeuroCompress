@@ -86,9 +86,7 @@ def test_sign_binarize_function_in_conv2d(binary_conv2d):
 def test_stochastic_binary_sign_function_in_conv2d(stochastic_binary_conv2d):
     x = torch.randn(1, IN_CHANNELS, 32, 32)
     with torch.no_grad():
-        stochastic_binary_weights = stochastic_binary_conv2d.binarize_function.apply(
-            stochastic_binary_conv2d.weight
-        )
+        stochastic_binary_weights = stochastic_binary_conv2d.binarize_function.apply(stochastic_binary_conv2d.weight)
     output = F.conv2d(
         x,
         stochastic_binary_weights,

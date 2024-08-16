@@ -4,3 +4,4 @@ data/
 *.gz
 *.pytest_cache
 *DS_Store
+*scratch.py

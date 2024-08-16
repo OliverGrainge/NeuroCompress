@@ -13,12 +13,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from NeuroPress.QLayers import (
     LinearW1A1,
     LinearW1A16,
+    LinearW2A8,
     LinearW2A16,
+    LinearW4A8,
     LinearW4A16,
     LinearW8A8,
     LinearW8A16,
-    StochasticLinearW1A1,
-    StochasticLinearW1A16,
 )
 from NeuroPress.Utils import get_device
 
@@ -31,7 +31,7 @@ epochs = 3  # Number of training epochs
 learning_rate = 0.01  # learning rate
 device = get_device()  # Setting the device
 
-qlayer = LinearW4A16  # qunatized layer example
+qlayer = LinearW1A16  # qunatized layer example
 
 
 class QuantMLP(nn.Module):
@@ -51,33 +51,10 @@ class QuantMLP(nn.Module):
         return x
 
 
-class MLP(nn.Module):
-    def __init__(self):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_sizes[0])
-        self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
-        self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(hidden_sizes[1], output_size)
-
-    def forward(self, x):
-        x = x.view(-1, 784)  # Flatten the image
-        x = self.relu1(self.fc1(x))
-        x = self.relu2(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
 # Data loading
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-)
-train_dataset = datasets.MNIST(
-    root="./data", train=True, download=True, transform=transform
-)
-test_dataset = datasets.MNIST(
-    root="./data", train=False, download=True, transform=transform
-)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
+test_dataset = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
@@ -122,9 +99,7 @@ def evaluate_model(model, criterion):
 
     test_loss /= len(test_loader.dataset)
     accuracy = 100.0 * correct / len(test_loader.dataset)
-    print(
-        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)"
-    )
+    print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)")
 
 
 train_model(Qmodel, Qoptimizer, Qcriterion)
