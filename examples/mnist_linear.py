@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import NeuroPress.QLayers as Q
+from NeuroPress import postquantize
 from NeuroPress.Utils import get_device
 
 torch.manual_seed(42)
@@ -46,15 +47,6 @@ class MLP(nn.Module):
         x = self.relu2(self.ln_2(self.fc2(x)))
         x = self.fc3(x)
         return x
-
-
-def postquantize(model: nn.Module, qlayer: nn.Linear):
-    for name, layer in model.named_modules():
-        if isinstance(layer, nn.Linear):
-            has_bias = False if layer.bias is None else True
-            new_layer = qlayer(layer.in_features, layer.out_features, has_bias)
-            new_layer.setup(layer)
-            setattr(model, name, new_layer)
 
 
 # Data loading
@@ -110,7 +102,7 @@ def evaluate_model(model, criterion):
 
 train_model(Qmodel, Qoptimizer, Qcriterion)
 evaluate_model(Qmodel, Qcriterion)
-postquantize(Qmodel, qlayer)
+postquantize(Qmodel, qlinear=qlayer)
 evaluate_model(Qmodel, Qcriterion)
 Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
 train_model(Qmodel, Qoptimizer, Qcriterion)

@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import NeuroPress.QLayers as Q
+from NeuroPress import postquantize
 from NeuroPress.Utils import get_device
 
 # Hyperparameters
@@ -52,29 +53,6 @@ class CNN(nn.Module):
         x = F.relu(self.fcbn2(self.fc2(x)))
         x = self.fc3(x)
         return x
-
-
-def postquantize(model: nn.Module):
-    for name, layer in model.named_modules():
-        if isinstance(layer, nn.Linear):
-            new_layer = qlinear(layer.in_features, layer.out_features, has_bias)
-            has_bias = False if layer.bias is None else True
-            new_layer.setup(layer)
-            setattr(model, name, new_layer)
-        if isinstance(layer, nn.Conv2d):
-            has_bias = False if layer.bias is None else True
-            new_layer = qconv(
-                layer.in_channels,
-                layer.out_channels,
-                layer.kernel_size,
-                stride=layer.stride,
-                padding=layer.padding,
-                dilation=layer.dilation,
-                groups=layer.groups,
-                bias=has_bias,
-            )
-            new_layer.setup(layer)
-            setattr(model, name, new_layer)
 
 
 # Data loading with transforms
@@ -129,7 +107,7 @@ def evaluate_model(model):
 # Train and evaluate the model
 train_model(model, optimizer, criterion)
 evaluate_model(model)
-postquantize(model)
+postquantize(model, qlinear=qlinear, qconv=qconv)
 evaluate_model(model)
 train_model(model, optimizer, criterion)
 evaluate_model(model)
