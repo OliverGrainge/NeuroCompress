@@ -104,10 +104,11 @@ def evaluate_model(model):
     print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)")
 
 
-# Train and evaluate the model
-train_model(model, optimizer, criterion)
-evaluate_model(model)
-postquantize(model, qlinear=qlinear, qconv=qconv)
-evaluate_model(model)
-train_model(model, optimizer, criterion)
-evaluate_model(model)
+if __name__ == "__main__":
+    # Train and evaluate the model
+    train_model(model, optimizer, criterion)
+    evaluate_model(model)
+    postquantize(model, qlinear=qlinear, qconv=qconv)
+    evaluate_model(model)
+    train_model(model, optimizer, criterion)
+    evaluate_model(model)

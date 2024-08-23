@@ -100,10 +100,11 @@ def evaluate_model(model, criterion):
     print(f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)")
 
 
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel, Qcriterion)
-postquantize(Qmodel, qlinear=qlayer)
-evaluate_model(Qmodel, Qcriterion)
-Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
-train_model(Qmodel, Qoptimizer, Qcriterion)
-evaluate_model(Qmodel, Qcriterion)
+if __name__ == "__main__":
+    train_model(Qmodel, Qoptimizer, Qcriterion)
+    evaluate_model(Qmodel, Qcriterion)
+    postquantize(Qmodel, qlinear=qlayer)
+    evaluate_model(Qmodel, Qcriterion)
+    Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
+    train_model(Qmodel, Qoptimizer, Qcriterion)
+    evaluate_model(Qmodel, Qcriterion)
