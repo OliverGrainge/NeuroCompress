@@ -12,9 +12,13 @@ def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module =
             new_layer = qlinear(layer.in_features, layer.out_features, has_bias)
             new_layer.setup(layer)
 
-            # Find the parent module and replace the layer
-            parent_name, child_name = name.rsplit('.', 1)
-            parent_module = model.get_submodule(parent_name)
+            # Handle top-level modules without a dot in the name
+            if '.' in name:
+                parent_name, child_name = name.rsplit('.', 1)
+                parent_module = model.get_submodule(parent_name)
+            else:
+                parent_module, child_name = model, name
+
             replace_module(parent_module, child_name, new_layer)
 
         if qconv is not None and isinstance(layer, nn.Conv2d):
@@ -31,7 +35,11 @@ def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module =
             )
             new_layer.setup(layer)
 
-            # Find the parent module and replace the layer
-            parent_name, child_name = name.rsplit('.', 1)
-            parent_module = model.get_submodule(parent_name)
+            # Handle top-level modules without a dot in the name
+            if '.' in name:
+                parent_name, child_name = name.rsplit('.', 1)
+                parent_module = model.get_submodule(parent_name)
+            else:
+                parent_module, child_name = model, name
+
             replace_module(parent_module, child_name, new_layer)
