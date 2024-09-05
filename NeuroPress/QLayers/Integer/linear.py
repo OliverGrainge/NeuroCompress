@@ -36,6 +36,12 @@ class WeightOnlyQuant(BaseLinear):
         self.bits = bits
         self.type = type
 
+    def quantize(self):
+        q_weights, scale, zero_point = forward_quantize_per_tensor(self.weight, bits=self.bits, type=self.type)
+        q_bias = quantize_per_tensor(self.bias, scale, zero_point, bits=self.bits, type=self.type)
+        dq_weights = dequantize_per_tensor(q_weights, scale, zero_point)
+        return dq_weights
+
     def forward(self, x):
         q_weights, scale, zero_point = forward_quantize_per_tensor(self.weight, bits=self.bits, type=self.type)
         q_bias = quantize_per_tensor(self.bias, scale, zero_point, bits=self.bits, type=self.type)
