@@ -129,6 +129,12 @@ def evaluate_model(model, criterion):
 
 
 if __name__ == "__main__":
+    layer_map = {}
+    for name, layer in Qmodel.named_modules():
+        if "fc3" in name: 
+            layer_map[layer] = Q.LinearW8A16
+
+    print(layer_map)
     # Dictionary to store accuracies for different models
     results = {}
 
@@ -141,7 +147,8 @@ if __name__ == "__main__":
 
     # Post quantizing and evaluating the model
     print_warning("Post Quantizing Model...")
-    postquantize(Qmodel, qlinear=qlayer)
+    postquantize(Qmodel, layer_map=layer_map)
+    print(Qmodel)
     print_info("Evaluating Post Quantized Model...")
     loss, accuracy = evaluate_model(Qmodel, Qcriterion)
     results["Post Quantized"] = accuracy
