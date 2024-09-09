@@ -1,10 +1,30 @@
 import torch
 import torch.nn.functional as F
 from torch.autograd import Function
+from .projection import compute_scales
+from .quantize import quantize
 
-import NeuroPress.QLayers.Ternary.projection as proj
+
+class Quantize(Function):
+    @staticmethod
+    def forward(ctx, x, proj_type):
+        alpha, delta = compute_scales(x)
+        qtensor = quantize(x, delta)
+        return qtensor, alpha, delta
+    
+    @staticmethod 
+    def backward(ctx, grad_qtensor, grad_alpha, grad_delta):
+        grad_input = grad_qtensor.clone()
+        return grad_input, None, None
+    
+
+def ternary_quantize(x, proj_type="twn"):
+    if proj_type == "twn":
+        return Quantize.apply(x, "twn")
 
 
+
+"""
 class ternarize_twn(Function):
     @staticmethod
     def forward(ctx, x):
@@ -36,3 +56,4 @@ class ternarize_ttn(Function):
         grad_wp_input = (grad_qtensor * pos_mask.float()).view(grad_qtensor.shape[0], -1).sum(dim=1)
         grad_wn_input = (grad_qtensor * neg_mask.float()).view(grad_qtensor.shape[0], -1).sum(dim=1)
         return grad_input, grad_wp_input, grad_wn_input
+"""

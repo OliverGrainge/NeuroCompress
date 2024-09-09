@@ -99,7 +99,7 @@ def mse(tensor: torch.Tensor, bits: int = 8, num_steps: int = 1000, per_channel=
             best_scale = scale_var
             best_zero_point = zero_point
 
-    return best_scale, best_zero_point.to(tensor.deivce)
+    return best_scale, best_zero_point.to(tensor.device)
 
 
 def compute_scale_and_zeropoint(tensor: torch.Tensor, proj_type: str="minmax", bits: int = 8, per_channel=False, symmetric=True):

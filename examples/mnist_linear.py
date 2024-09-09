@@ -28,7 +28,7 @@ learning_rate = 0.01  # learning rate
 num_workers=8
 device = get_device()  # Setting the device
 
-qlayer = Q.LinearW8A16  # Quantized layer example
+qlayer = Q.LinearWTA16  # Quantized layer example
 layer = nn.Linear
 
 
@@ -148,14 +148,14 @@ if __name__ == "__main__":
     results["Post Quantized"] = accuracy
 
     # Retraining with QAT and evaluating the model
-    """
+    
     print_info("Retraining with QAT (Quantization Aware Training)...")
     Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
     train_model(Qmodel, Qoptimizer, Qcriterion)
     print_info("Evaluating QAT Trained Model...")
     loss, accuracy = evaluate_model(Qmodel, Qcriterion)
     results["QAT Trained"] = accuracy
-    """
+    
     # Print summary of accuracies
     print_info("\n\n ====================== Summary of Model Accuracies: =======================")
     for model_type, acc in results.items():

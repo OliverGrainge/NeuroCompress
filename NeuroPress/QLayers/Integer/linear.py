@@ -113,12 +113,12 @@ class LinearW8A16(WeightOnlyQuant):
 
 class LinearW4A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW4A16, self).__init__(in_features, out_features, bias=bias, proj_type="minmax", bits=4, per_channel=True, symmetric=True)
+        super(LinearW4A16, self).__init__(in_features, out_features, bias=bias, proj_type="kldiv", bits=4, per_channel=True, symmetric=True)
 
 
 class LinearW2A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW2A16, self).__init__(in_features, out_features, bias=bias, proj_type="minmax", bits=2, per_channel=True, symmetric=True)
+        super(LinearW2A16, self).__init__(in_features, out_features, bias=bias, proj_type="kldiv", bits=2, per_channel=True, symmetric=True)
 
 
 class LinearW8A8(FullQuant):
