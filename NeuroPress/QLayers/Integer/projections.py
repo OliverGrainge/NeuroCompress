@@ -29,7 +29,7 @@ def minmax(tensor: torch.Tensor, bits: int = 8, per_channel: bool = False, symme
         return scale, zero_point
     
 
-def kl_div(tensor: torch.Tensor, bits: int = 8, per_channel=False, symmetric=True, num_bins: int = 2048, eps=1e-10):
+def kl_div(tensor: torch.Tensor, bits: int = 8, per_channel=False, symmetric=True, num_bins: int = 1024, eps=1e-10):
     min_val, max_val = tensor.min(), tensor.max()
     num_bins = min(num_bins, tensor.numel())
     
@@ -45,7 +45,7 @@ def kl_div(tensor: torch.Tensor, bits: int = 8, per_channel=False, symmetric=Tru
     best_zero_point = None
 
     # Try different scales in the range
-    for scale_mult in torch.linspace(0.5, 1.5, num_bins):
+    for scale_mult in torch.linspace(0.5, 1.0, num_bins):
         scale_val = scale * scale_mult
         if not symmetric: 
             zero_point = torch.round(-min_val / scale_val).clamp(0, 2 ** bits - 1)
