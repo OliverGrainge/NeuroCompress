@@ -1,1 +1,1 @@
-from .quantize import postquantize
+from .quantize import postquantize, freeze

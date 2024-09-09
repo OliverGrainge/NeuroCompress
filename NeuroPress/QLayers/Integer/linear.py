@@ -1,13 +1,10 @@
 import math
 
+import torch 
 import torch.nn as nn
 
-from .quant import (
-    compute_scale,
-    dequantize_per_tensor,
-    forward_quantize_per_tensor,
-    quantize_per_tensor,
-)
+from .quant import linear_quantize
+from .quantize import quantize, dequantize
 
 
 class BaseLinear(nn.Linear):
@@ -31,24 +28,32 @@ class BaseLinear(nn.Linear):
 
 
 class WeightOnlyQuant(BaseLinear):
-    def __init__(self, in_features, out_features, bias=True, bits=8, type="signed"):
+    def __init__(self, in_features, out_features, bias=True, proj_type="minmax", bits=8, per_channel=True, symmetric=True):
         super(WeightOnlyQuant, self).__init__(in_features, out_features, bias=bias)
         self.bits = bits
-        self.type = type
+        self.proj_type = proj_type 
+        self.per_channel = per_channel 
+        self.symmetric = symmetric
 
-    def quantize(self):
-        q_weights, scale, zero_point = forward_quantize_per_tensor(self.weight, bits=self.bits, type=self.type)
-        q_bias = quantize_per_tensor(self.bias, scale, zero_point, bits=self.bits, type=self.type)
-        dq_weights = dequantize_per_tensor(q_weights, scale, zero_point)
-        return dq_weights
+        self.freeze_state = False
+    
+    def freeze(self):
+        self.freeze_state = True 
+        self.q_weights, self.scale, self.zero_point = linear_quantize(self.weight, proj_type=self.proj_type, bits=self.bits, per_channel=self.per_channel, symmetric=self.symmetric)
+
+    def unfreeze(self):
+        self.freeze_state = None 
+        self.q_weights, self.scale, self.zero_point = None, None, None
 
     def forward(self, x):
-        q_weights, scale, zero_point = forward_quantize_per_tensor(self.weight, bits=self.bits, type=self.type)
-        q_bias = quantize_per_tensor(self.bias, scale, zero_point, bits=self.bits, type=self.type)
-        dq_weights = dequantize_per_tensor(q_weights, scale, zero_point)
-        dq_bias = dequantize_per_tensor(q_bias, scale, zero_point)
+        if self.freeze_state: 
+            q_weights, scale, zero_point = self.q_weights, self.scale, self.zero_point
+        else: 
+            q_weights, scale, zero_point = linear_quantize(self.weight, proj_type=self.proj_type, bits=self.bits, per_channel=self.per_channel, symmetric=self.symmetric)
+        q_bias = quantize(self.bias, scale, zero_point)
+        dq_weights = dequantize(q_weights, scale, zero_point)
+        dq_bias = dequantize(q_bias, scale, zero_point)
         out = nn.functional.linear(x, dq_weights, dq_bias)
-
         return out
 
 
@@ -60,29 +65,42 @@ class FullQuant(BaseLinear):
         bias=True,
         act_bits=8,
         weight_bits=8,
-        weight_type="signed",
-        act_type="signed",
+        proj_type="minmax",
+        weight_per_channel=True,
+        act_per_channel=False,
+        symmetric=True,
     ):
         super(FullQuant, self).__init__(in_features, out_features, bias=bias)
+        self.proj_type = proj_type 
         self.weight_bits = weight_bits
         self.act_bits = act_bits
-        self.weight_type = weight_type
-        self.act_type = act_type
+        self.weight_per_channel = weight_per_channel 
+        self.act_per_channel = act_per_channel 
+        self.symmetric = symmetric 
+
+        self.freeze_state = False
+    
+    def freeze(self):
+        self.freeze_state = True 
+        self.q_weights, self.scale, self.zero_point = linear_quantize(self.weight, proj_type=self.proj_type, bits=self.bits, per_channel=self.per_channel, symmetric=self.symmetric)
+
+    def unfreeze(self):
+        self.freeze_state = None 
+        self.q_weights, self.scale, self.zero_point = None, None, None
+
 
     def forward(self, x):
-        q_weights, scale_w, zero_point_w = forward_quantize_per_tensor(self.weight, bits=self.weight_bits, type=self.weight_type)
-        q_x, scale_x, zero_point_x = forward_quantize_per_tensor(x, bits=self.act_bits, type=self.act_type)
-        q_bias = quantize_per_tensor(
+        q_weights, scale_w, zero_point_w = linear_quantize(self.weight, bits=self.weight_bits, proj_type=self.proj_type, per_channel=self.weight_per_channel, symmetric=self.symmetric)
+        q_x, scale_x, zero_point_x = linear_quantize(x, bits=self.act_bits, proj_type=self.proj_type, symmetric=self.symmetric, per_channel=self.act_per_channel)
+        q_bias = quantize(
             self.bias,
             scale_x * scale_w,
-            0.0,
-            bits=self.weight_bits,
-            type=self.weight_type,
+            torch.zeros_like(scale_x * scale_w)
         )
         out = scale_x * scale_w * nn.functional.linear(q_x, q_weights, q_bias)
-        if self.weight_type == "unsigned":
+        if self.symmetric == False:
             out -= (q_x.sum(1) * scale_x * scale_w * zero_point_w).view(-1, 1)
-        if self.act_type == "unsigned":
+        if self.symmetric == False:
             out -= scale_x * scale_w * zero_point_x * q_weights
             out += scale_x * scale_w * zero_point_w * zero_point_x
         return out
@@ -90,17 +108,17 @@ class FullQuant(BaseLinear):
 
 class LinearW8A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW8A16, self).__init__(in_features, out_features, bias=bias, bits=8, type="signed")
+        super(LinearW8A16, self).__init__(in_features, out_features, bias=bias, proj_type="kldiv", bits=8, per_channel=True, symmetric=True)
 
 
 class LinearW4A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW4A16, self).__init__(in_features, out_features, bias=bias, bits=4, type="unsigned")
+        super(LinearW4A16, self).__init__(in_features, out_features, bias=bias, proj_type="minmax", bits=4, per_channel=True, symmetric=True)
 
 
 class LinearW2A16(WeightOnlyQuant):
     def __init__(self, in_features, out_features, bias=True):
-        super(LinearW2A16, self).__init__(in_features, out_features, bias=bias, bits=2, type="unsigned")
+        super(LinearW2A16, self).__init__(in_features, out_features, bias=bias, proj_type="minmax", bits=2, per_channel=True, symmetric=True)
 
 
 class LinearW8A8(FullQuant):
@@ -111,8 +129,10 @@ class LinearW8A8(FullQuant):
             bias=bias,
             act_bits=8,
             weight_bits=8,
-            act_type="signed",
-            weight_type="signed",
+            proj_type="minmax",
+            weight_per_channel=True, 
+            act_per_channel=False,
+            symmetric=True,
         )
 
 
@@ -124,8 +144,10 @@ class LinearW4A8(FullQuant):
             bias=bias,
             act_bits=8,
             weight_bits=4,
-            act_type="signed",
-            weight_type="unsigned",
+            proj_type="minmax",
+            weight_per_channel=True, 
+            act_per_channel=False,
+            symmetric=True,
         )
 
 
@@ -137,6 +159,8 @@ class LinearW2A8(FullQuant):
             bias=bias,
             act_bits=8,
             weight_bits=2,
-            act_type="signed",
-            weight_type="unsigned",
+            proj_type="minmax",
+            weight_per_channel=True, 
+            act_per_channel=False,
+            symmetric=True,
         )

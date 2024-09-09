@@ -111,3 +111,10 @@ def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module =
         postquantize_layermap(model, layer_map)
     else: 
         postquantize_all(model, qlinear=qlinear, qconv=qconv)
+
+
+
+def freeze(model: nn.Module):
+    for layer in model.modules():
+        if hasattr(layer, 'freeze'): 
+            layer.freeze()

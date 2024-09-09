@@ -13,7 +13,7 @@ init(autoreset=True)
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import NeuroPress.QLayers as Q
-from NeuroPress import postquantize
+from NeuroPress import postquantize, freeze
 from NeuroPress.Utils import get_device
 
 torch.manual_seed(42)
@@ -28,7 +28,7 @@ learning_rate = 0.01  # learning rate
 num_workers=8
 device = get_device()  # Setting the device
 
-qlayer = Q.LinearW8A8  # Quantized layer example
+qlayer = Q.LinearW8A16  # Quantized layer example
 layer = nn.Linear
 
 
@@ -142,18 +142,20 @@ if __name__ == "__main__":
     # Post quantizing and evaluating the model
     print_warning("Post Quantizing Model...")
     postquantize(Qmodel, qlinear=qlayer)
+    freeze(Qmodel)
     print_info("Evaluating Post Quantized Model...")
     loss, accuracy = evaluate_model(Qmodel, Qcriterion)
     results["Post Quantized"] = accuracy
 
     # Retraining with QAT and evaluating the model
+    """
     print_info("Retraining with QAT (Quantization Aware Training)...")
     Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
     train_model(Qmodel, Qoptimizer, Qcriterion)
     print_info("Evaluating QAT Trained Model...")
     loss, accuracy = evaluate_model(Qmodel, Qcriterion)
     results["QAT Trained"] = accuracy
-
+    """
     # Print summary of accuracies
     print_info("\n\n ====================== Summary of Model Accuracies: =======================")
     for model_type, acc in results.items():
