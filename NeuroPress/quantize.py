@@ -1,5 +1,4 @@
 import torch.nn as nn
-from NeuroPress.QLayers import ALL_QLINEARS
 
 
 def postquantize_layermap(model, layer_map):
