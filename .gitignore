@@ -6,3 +6,4 @@ data/
 *DS_Store
 *scratch.py
 tb_logs/
+*tb_logs*
