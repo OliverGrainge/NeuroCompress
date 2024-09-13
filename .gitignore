@@ -5,3 +5,4 @@ data/
 *.pytest_cache
 *DS_Store
 *scratch.py
+tb_logs/
