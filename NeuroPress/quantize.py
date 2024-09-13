@@ -3,14 +3,15 @@ import torch.nn as nn
 
 def postquantize_layermap(model, layer_map):
     """
-    Replaces layers in the model based on the provided layer_map. 
+    Replaces layers in the model based on the provided layer_map.
     Layers that are not in layer_map remain unchanged.
 
     Args:
         model: The PyTorch model whose layers you want to replace.
-        layer_map: A dictionary where the keys are the actual layer instances 
+        layer_map: A dictionary where the keys are the actual layer instances
                    in the model, and the values are the new layer types to replace them with.
     """
+
     def replace_module(parent, name, new_layer):
         """Replace a module within its parent module."""
         parent._modules[name] = new_layer
@@ -20,9 +21,9 @@ def postquantize_layermap(model, layer_map):
         # Check if the current layer is exactly the same object as any key in the layer_map
         if layer in layer_map:
             replacement_layer_type = layer_map[layer]
-            
+
             # Check if the layer has bias (if applicable)
-            has_bias = layer.bias is not None if hasattr(layer, 'bias') else False
+            has_bias = layer.bias is not None if hasattr(layer, "bias") else False
 
             # Replace nn.Linear
             if isinstance(layer, nn.Linear):
@@ -42,22 +43,18 @@ def postquantize_layermap(model, layer_map):
                 )
 
             # If the new layer has a custom setup method, call it
-            if hasattr(new_layer, 'setup'):
+            if hasattr(new_layer, "setup"):
                 new_layer.setup(layer)
 
             # Handle top-level modules without a dot in the name
-            if '.' in name:
-                parent_name, child_name = name.rsplit('.', 1)
+            if "." in name:
+                parent_name, child_name = name.rsplit(".", 1)
                 parent_module = model.get_submodule(parent_name)
             else:
                 parent_module, child_name = model, name
 
             # Replace the layer with the new one
             replace_module(parent_module, child_name, new_layer)
-
-
-
-
 
 
 def postquantize_all(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module = None):
@@ -72,8 +69,8 @@ def postquantize_all(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Modu
             new_layer.setup(layer)
 
             # Handle top-level modules without a dot in the name
-            if '.' in name:
-                parent_name, child_name = name.rsplit('.', 1)
+            if "." in name:
+                parent_name, child_name = name.rsplit(".", 1)
                 parent_module = model.get_submodule(parent_name)
             else:
                 parent_module, child_name = model, name
@@ -95,8 +92,8 @@ def postquantize_all(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Modu
             new_layer.setup(layer)
 
             # Handle top-level modules without a dot in the name
-            if '.' in name:
-                parent_name, child_name = name.rsplit('.', 1)
+            if "." in name:
+                parent_name, child_name = name.rsplit(".", 1)
                 parent_module = model.get_submodule(parent_name)
             else:
                 parent_module, child_name = model, name
@@ -104,16 +101,14 @@ def postquantize_all(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Modu
             replace_module(parent_module, child_name, new_layer)
 
 
-
-def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module = None, layer_map=None): 
-    if layer_map is not None: 
+def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module = None, layer_map=None):
+    if layer_map is not None:
         postquantize_layermap(model, layer_map)
-    else: 
+    else:
         postquantize_all(model, qlinear=qlinear, qconv=qconv)
-
 
 
 def freeze(model: nn.Module):
     for layer in model.modules():
-        if hasattr(layer, 'freeze'): 
+        if hasattr(layer, "freeze"):
             layer.freeze()

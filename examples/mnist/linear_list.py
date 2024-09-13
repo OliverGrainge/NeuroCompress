@@ -1,12 +1,13 @@
 import os
 import sys
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from colorama import Fore, Style, init  # For colorful output
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
-from colorama import Fore, Style, init  # For colorful output
 
 # Initialize colorama for colored output
 init(autoreset=True)
@@ -25,7 +26,7 @@ output_size = 10  # 10 classes for the digits 0-9
 batch_size = 512  # You can modify this as needed
 epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
-num_workers=8
+num_workers = 8
 device = get_device()  # Setting the device
 
 qlayer = Q.LinearW8A8  # Quantized layer example
@@ -102,7 +103,7 @@ def train_model(model, optimizer, criterion):
                 total += len(target)
 
                 accuracy = 100.0 * correct / total
-                tepoch.set_postfix(loss=total_loss/(tepoch.n+1), accuracy=accuracy)
+                tepoch.set_postfix(loss=total_loss / (tepoch.n + 1), accuracy=accuracy)
 
     return model
 
@@ -131,7 +132,7 @@ def evaluate_model(model, criterion):
 if __name__ == "__main__":
     layer_map = {}
     for name, layer in Qmodel.named_modules():
-        if "fc3" in name: 
+        if "fc3" in name:
             layer_map[layer] = Q.LinearW8A16
 
     print(layer_map)

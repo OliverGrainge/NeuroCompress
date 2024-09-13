@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.autograd import Function
+
 from .projection import compute_scales
 from .quantize import quantize
 
@@ -11,17 +12,16 @@ class Quantize(Function):
         alpha, delta = compute_scales(x)
         qtensor = quantize(x, delta)
         return qtensor, alpha, delta
-    
-    @staticmethod 
+
+    @staticmethod
     def backward(ctx, grad_qtensor, grad_alpha, grad_delta):
         grad_input = grad_qtensor.clone()
         return grad_input, None, None
-    
+
 
 def ternary_quantize(x, proj_type="twn"):
     if proj_type == "twn":
         return Quantize.apply(x, "twn")
-
 
 
 """

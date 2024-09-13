@@ -1,15 +1,16 @@
+import os
+import sys
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import sys 
-import os
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from NeuroPress.Utils import RMSNorm
 from NeuroPress.QLayers.Ternary import LinearWTA8
+from NeuroPress.Utils import RMSNorm
 
 qlayer = LinearWTA8
 
@@ -17,47 +18,41 @@ qlayer = LinearWTA8
 def pair(t):
     return t if isinstance(t, tuple) else (t, t)
 
+
 class FeedForward(nn.Module):
-    def __init__(self, dim, hidden_dim, dropout = 0.):
+    def __init__(self, dim, hidden_dim, dropout=0.0):
         super().__init__()
         self.net = nn.Sequential(
-            nn.LayerNorm(dim),
-            qlayer(dim, hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            qlayer(hidden_dim, dim),
-            nn.Dropout(dropout)
+            nn.LayerNorm(dim), qlayer(dim, hidden_dim), nn.GELU(), nn.Dropout(dropout), qlayer(hidden_dim, dim), nn.Dropout(dropout)
         )
 
     def forward(self, x):
         return self.net(x)
 
+
 class Attention(nn.Module):
-    def __init__(self, dim, heads = 8, dim_head = 64, dropout = 0.):
+    def __init__(self, dim, heads=8, dim_head=64, dropout=0.0):
         super().__init__()
-        inner_dim = dim_head *  heads
+        inner_dim = dim_head * heads
         project_out = not (heads == 1 and dim_head == dim)
 
         self.heads = heads
-        self.scale = dim_head ** -0.5
+        self.scale = dim_head**-0.5
 
         self.norm = nn.LayerNorm(dim)
 
-        self.attend = nn.Softmax(dim = -1)
+        self.attend = nn.Softmax(dim=-1)
         self.dropout = nn.Dropout(dropout)
 
-        self.to_qkv = qlayer(dim, inner_dim * 3, bias = False)
+        self.to_qkv = qlayer(dim, inner_dim * 3, bias=False)
 
-        self.to_out = nn.Sequential(
-            qlayer(inner_dim, dim),
-            nn.Dropout(dropout)
-        ) if project_out else nn.Identity()
+        self.to_out = nn.Sequential(qlayer(inner_dim, dim), nn.Dropout(dropout)) if project_out else nn.Identity()
 
     def forward(self, x):
         x = self.norm(x)
 
-        qkv = self.to_qkv(x).chunk(3, dim = -1)
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), qkv)
+        qkv = self.to_qkv(x).chunk(3, dim=-1)
+        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.heads), qkv)
 
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
 
@@ -65,19 +60,19 @@ class Attention(nn.Module):
         attn = self.dropout(attn)
 
         out = torch.matmul(attn, v)
-        out = rearrange(out, 'b h n d -> b n (h d)')
+        out = rearrange(out, "b h n d -> b n (h d)")
         return self.to_out(out)
 
+
 class Transformer(nn.Module):
-    def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout = 0.):
+    def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout=0.0):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
         self.layers = nn.ModuleList([])
         for _ in range(depth):
-            self.layers.append(nn.ModuleList([
-                Attention(dim, heads = heads, dim_head = dim_head, dropout = dropout),
-                FeedForward(dim, mlp_dim, dropout = dropout)
-            ]))
+            self.layers.append(
+                nn.ModuleList([Attention(dim, heads=heads, dim_head=dim_head, dropout=dropout), FeedForward(dim, mlp_dim, dropout=dropout)])
+            )
 
     def forward(self, x):
         for attn, ff in self.layers:
@@ -86,20 +81,36 @@ class Transformer(nn.Module):
 
         return self.norm(x)
 
+
 class ViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(
+        self,
+        *,
+        image_size,
+        patch_size,
+        num_classes,
+        dim,
+        depth,
+        heads,
+        mlp_dim,
+        pool="cls",
+        channels=3,
+        dim_head=64,
+        dropout=0.0,
+        emb_dropout=0.0,
+    ):
         super().__init__()
         image_height, image_width = pair(image_size)
         patch_height, patch_width = pair(patch_size)
 
-        assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
+        assert image_height % patch_height == 0 and image_width % patch_width == 0, "Image dimensions must be divisible by the patch size."
 
         num_patches = (image_height // patch_height) * (image_width // patch_width)
         patch_dim = channels * patch_height * patch_width
-        assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
+        assert pool in {"cls", "mean"}, "pool type must be either cls (cls token) or mean (mean pooling)"
 
         self.to_patch_embedding = nn.Sequential(
-            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = patch_height, p2 = patch_width),
+            Rearrange("b c (h p1) (w p2) -> b (h w) (p1 p2 c)", p1=patch_height, p2=patch_width),
             nn.LayerNorm(patch_dim),
             qlayer(patch_dim, dim),
             nn.LayerNorm(dim),
@@ -120,14 +131,14 @@ class ViT(nn.Module):
         x = self.to_patch_embedding(img)
         b, n, _ = x.shape
 
-        cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b = b)
+        cls_tokens = repeat(self.cls_token, "1 1 d -> b 1 d", b=b)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
+        x += self.pos_embedding[:, : (n + 1)]
         x = self.dropout(x)
 
         x = self.transformer(x)
 
-        x = x.mean(dim = 1) if self.pool == 'mean' else x[:, 0]
+        x = x.mean(dim=1) if self.pool == "mean" else x[:, 0]
 
         x = self.to_latent(x)
         return self.mlp_head(x)
@@ -140,20 +151,24 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-val_transform = transforms.Compose([
-    transforms.Resize((224, 224)),  # Resize images to 224x224
-    transforms.ToTensor(),  # Convert images to tensors
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize the dataset
-])
+val_transform = transforms.Compose(
+    [
+        transforms.Resize((224, 224)),  # Resize images to 224x224
+        transforms.ToTensor(),  # Convert images to tensors
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Normalize the dataset
+    ]
+)
 
-train_transform = transforms.Compose([
-    transforms.RandomResizedCrop((224, 224), scale=(0.8, 1.0)),  # Randomly crop and resize
-    transforms.RandomHorizontalFlip(),  # Random horizontal flip
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Color jitter
-    transforms.ToTensor(),  # Convert images to tensors
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Normalize the dataset
-    transforms.RandomErasing()  # Random erasing
-])
+train_transform = transforms.Compose(
+    [
+        transforms.RandomResizedCrop((224, 224), scale=(0.8, 1.0)),  # Randomly crop and resize
+        transforms.RandomHorizontalFlip(),  # Random horizontal flip
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Color jitter
+        transforms.ToTensor(),  # Convert images to tensors
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Normalize the dataset
+        transforms.RandomErasing(),  # Random erasing
+    ]
+)
 
 
 train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=train_transform)
@@ -166,28 +181,19 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=128, shuffle=False, nu
 
 
 # Initialize the model
-model = ViT(
-    image_size = 224,
-    patch_size = 16,
-    num_classes = 102,
-    dim = 1024,
-    depth = 4,
-    heads = 4,
-    mlp_dim = 2048,
-    dropout = 0.1,
-    emb_dropout = 0.1
-)
+model = ViT(image_size=224, patch_size=16, num_classes=102, dim=1024, depth=4, heads=4, mlp_dim=2048, dropout=0.1, emb_dropout=0.1)
 
 # Loss
 # Loss function and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+
 # Training loop
-def train(model, train_loader, criterion, optimizer, epochs=5, device='cuda' if torch.cuda.is_available() else 'cpu'):
+def train(model, train_loader, criterion, optimizer, epochs=5, device="cuda" if torch.cuda.is_available() else "cpu"):
     model.to(device)
     model.train()
-    
+
     for epoch in range(epochs):
         running_loss = 0.0
         correct = 0
@@ -198,7 +204,7 @@ def train(model, train_loader, criterion, optimizer, epochs=5, device='cuda' if 
             # Forward pass
             outputs = model(images)
             loss = criterion(outputs, labels)
-            
+
             # Backward pass and optimization
             optimizer.zero_grad()
             loss.backward()
@@ -209,16 +215,17 @@ def train(model, train_loader, criterion, optimizer, epochs=5, device='cuda' if 
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-        
+
         epoch_loss = running_loss / len(train_loader)
         epoch_acc = correct / total
-        print(f'Epoch [{epoch+1}/{epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}')
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}")
+
 
 # Test loop to evaluate the model
-def test(model, test_loader, device='cuda' if torch.cuda.is_available() else 'cpu'):
+def test(model, test_loader, device="cuda" if torch.cuda.is_available() else "cpu"):
     model.to(device)
     model.eval()
-    
+
     correct = 0
     total = 0
     with torch.no_grad():
@@ -228,9 +235,10 @@ def test(model, test_loader, device='cuda' if torch.cuda.is_available() else 'cp
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-    
+
     accuracy = correct / total
-    print(f'Test Accuracy: {accuracy:.4f}')
+    print(f"Test Accuracy: {accuracy:.4f}")
+
 
 # Train the model
 for _ in range(100):

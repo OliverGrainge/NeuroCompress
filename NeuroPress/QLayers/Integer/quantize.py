@@ -1,5 +1,6 @@
-import torch 
-import torch.nn.functional as F 
+import torch
+import torch.nn.functional as F
+
 
 def quantize(tensor: torch.Tensor, scale: torch.Tensor, zero_point: torch.Tensor):
     if scale.numel() == 1:  # Scalar scale
@@ -9,6 +10,7 @@ def quantize(tensor: torch.Tensor, scale: torch.Tensor, zero_point: torch.Tensor
         zero_point = zero_point.view(tensor.shape[0], *[1 for _ in range(tensor.ndim - 1)])
         qtensor = torch.round(tensor / scale.to(tensor.device)) + zero_point.to(tensor.device)
     return qtensor
+
 
 def dequantize(qtensor: torch.Tensor, scale: torch.Tensor, zero_point: torch.Tensor):
     if scale.numel() == 1:  # Scalar scale

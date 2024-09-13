@@ -1,19 +1,20 @@
 import os
 import sys
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from colorama import Fore, Style, init  # For colorful output
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
-from colorama import Fore, Style, init  # For colorful output
 
 # Initialize colorama for colored output
 init(autoreset=True)
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import NeuroPress.QLayers as Q
-from NeuroPress import postquantize, freeze
+from NeuroPress import freeze, postquantize
 from NeuroPress.Utils import get_device
 
 torch.manual_seed(42)
@@ -25,7 +26,7 @@ output_size = 10  # 10 classes for the digits 0-9
 batch_size = 512  # You can modify this as needed
 epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
-num_workers=8
+num_workers = 8
 device = get_device()  # Setting the device
 
 qlayer = Q.LinearWTA16  # Quantized layer example
@@ -102,7 +103,7 @@ def train_model(model, optimizer, criterion):
                 total += len(target)
 
                 accuracy = 100.0 * correct / total
-                tepoch.set_postfix(loss=total_loss/(tepoch.n+1), accuracy=accuracy)
+                tepoch.set_postfix(loss=total_loss / (tepoch.n + 1), accuracy=accuracy)
 
     return model
 
@@ -148,14 +149,14 @@ if __name__ == "__main__":
     results["Post Quantized"] = accuracy
 
     # Retraining with QAT and evaluating the model
-    
+
     print_info("Retraining with QAT (Quantization Aware Training)...")
     Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
     train_model(Qmodel, Qoptimizer, Qcriterion)
     print_info("Evaluating QAT Trained Model...")
     loss, accuracy = evaluate_model(Qmodel, Qcriterion)
     results["QAT Trained"] = accuracy
-    
+
     # Print summary of accuracies
     print_info("\n\n ====================== Summary of Model Accuracies: =======================")
     for model_type, acc in results.items():

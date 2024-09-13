@@ -9,7 +9,6 @@ def get_device():
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-
 """
 class RMSNorm(nn.Module):
     def __init__(self, d, eps=1e-8):
@@ -22,6 +21,7 @@ class RMSNorm(nn.Module):
         rms = torch.sqrt(torch.mean(x ** 2, dim=-1, keepdim=True) + self.eps)
         return x / rms * self.scale  # Normalize the input and apply scaling
 """
+
 
 class RMSNorm(nn.Module):
     def __init__(self, hidden_size, eps=1e-6):
