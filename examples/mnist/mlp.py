@@ -15,7 +15,7 @@ init(autoreset=True)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import NeuroPress.QLayers as Q
 from NeuroPress import postquantize
-from NeuroPress.QLayers.Ternary import LinearWTA8, MyLinearWTA8
+from NeuroPress.QLayers.Ternary import LinearWTA8
 from NeuroPress.Utils import get_device
 
 torch.manual_seed(42)
@@ -30,7 +30,7 @@ learning_rate = 0.01  # learning rate
 num_workers = 0
 device = get_device()  # Setting the device
 
-layer = MyLinearWTA8
+layer = LinearWTA8
 
 
 # MLP model definition
