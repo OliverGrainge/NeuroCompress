@@ -18,11 +18,12 @@ torch.set_float32_matmul_precision("medium")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from NeuroPress.QLayers.Ternary import LinearWTA8, MyLinearWTA8
+from NeuroPress.QLayers.Ternary import LinearWTA8
 from NeuroPress import postquantize
 from NeuroPress.Utils import RMSNorm
 
-qlayer = MyLinearWTA8
+#qlayer = nn.Linear
+qlayer = LinearWTA8
 
 
 # Define the ViT LightningModule
@@ -32,7 +33,6 @@ class ViTLightningModule(pl.LightningModule):
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
         self.lr = lr
-        self.automatic_optimization = False
 
     def forward(self, x):
         return self.model(x)
@@ -45,22 +45,11 @@ class ViTLightningModule(pl.LightningModule):
         loss = self.criterion(outputs, labels)
         if torch.isnan(loss) or torch.isinf(loss):
             print("NaN or Inf detected in loss")
-
-        self.manual_backward(loss)
-        # Perform optimizer step
-        optimizer = self.optimizers()
-        optimizer.step()
-        optimizer.zero_grad()
-        
-        # Check for NaNs in weights
-        for name, param in self.model.named_parameters():
-            if torch.isnan(param.data).any() or torch.isinf(param.data).any():
-                print(f"NaN or Inf detected in weights of {name} after optimizer step")
     
         acc = accuracy(outputs, labels, task="multiclass", num_classes=10)
         self.log("train_loss", loss, prog_bar=True, logger=True)
         self.log("train_acc", acc, prog_bar=True, logger=True)
-        #return loss
+        return loss
 
     def validation_step(self, batch, batch_idx):
         images, labels = batch
@@ -189,19 +178,16 @@ val_transform = transforms.Compose(
 train_transform = transforms.Compose(
     [
         transforms.RandomResizedCrop((224, 224), scale=(0.8, 1.0)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        transforms.RandomErasing(),
     ]
 )
 
 train_dataset = datasets.CIFAR10(root="./data", train=True, transform=train_transform, download=True)
 test_dataset = datasets.CIFAR10(root="./data", train=False, transform=val_transform, download=True)
 
-train_loader = DataLoader(train_dataset, batch_size=96, shuffle=True, num_workers=0)
-test_loader = DataLoader(test_dataset, batch_size=96, shuffle=False, num_workers=0)
+train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True, num_workers=8)
+test_loader = DataLoader(test_dataset, batch_size=256, shuffle=False, num_workers=8)
 
 # Initialize ViT model and LightningModule
 model = ViT(
@@ -220,17 +206,17 @@ model = ViT(
 
 
 
-vit_lightning_model = ViTLightningModule(model, lr=1e-5)
+vit_lightning_model = ViTLightningModule(model, lr=1e-4)
 # vit_lightning_model = torch.compile(vit_lightning_model)
 
 # Set up TensorBoard logger
-logger = TensorBoardLogger("tb_logs", name=f"ViT_CIFAR10_tternary")
+logger = TensorBoardLogger("tb_logs", name=f"ViT_CIFAR10_ttternary")
 
 
 
 # Set up PyTorch Lightning trainer
 trainer = pl.Trainer(
-    max_epochs=15,                      # Reduce the number of epochs (usually less than 10 is enough for this test)
+    max_epochs=30,                      # Reduce the number of epochs (usually less than 10 is enough for this test)
     logger=logger,
     precision="32",              # Mixed precision for faster training
     num_sanity_val_steps=0,              # Skip validation sanity checks
