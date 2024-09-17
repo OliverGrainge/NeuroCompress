@@ -66,7 +66,8 @@ def postquantize_all(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Modu
         if qlinear is not None and isinstance(layer, nn.Linear):
             has_bias = layer.bias is not None
             new_layer = qlinear(layer.in_features, layer.out_features, has_bias)
-            new_layer.setup(layer)
+            if hasattr(new_layer, "setup"):
+                new_layer.setup(layer)
 
             # Handle top-level modules without a dot in the name
             if "." in name:
@@ -107,8 +108,3 @@ def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module =
     else:
         postquantize_all(model, qlinear=qlinear, qconv=qconv)
 
-
-def freeze(model: nn.Module):
-    for layer in model.modules():
-        if hasattr(layer, "freeze"):
-            layer.freeze()

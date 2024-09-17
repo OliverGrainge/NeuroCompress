@@ -11,15 +11,18 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 from torchmetrics.functional import accuracy
 from torchvision import datasets, transforms
+torch.autograd.set_detect_anomaly(True)
+
 
 torch.set_float32_matmul_precision("medium")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from NeuroPress.QLayers.Ternary import LinearWTA8
+from NeuroPress.QLayers.Ternary import LinearWTA8, MyLinearWTA8
+from NeuroPress import postquantize
 from NeuroPress.Utils import RMSNorm
 
-qlayer = LinearWTA8
+qlayer = MyLinearWTA8
 
 
 # Define the ViT LightningModule
@@ -29,6 +32,7 @@ class ViTLightningModule(pl.LightningModule):
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
         self.lr = lr
+        self.automatic_optimization = False
 
     def forward(self, x):
         return self.model(x)
@@ -36,11 +40,27 @@ class ViTLightningModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         images, labels = batch
         outputs = self.model(images)
+        if torch.isnan(outputs).any() or torch.isinf(outputs).any():
+            print("NaN or Inf detected in outputs")
         loss = self.criterion(outputs, labels)
+        if torch.isnan(loss) or torch.isinf(loss):
+            print("NaN or Inf detected in loss")
+
+        self.manual_backward(loss)
+        # Perform optimizer step
+        optimizer = self.optimizers()
+        optimizer.step()
+        optimizer.zero_grad()
+        
+        # Check for NaNs in weights
+        for name, param in self.model.named_parameters():
+            if torch.isnan(param.data).any() or torch.isinf(param.data).any():
+                print(f"NaN or Inf detected in weights of {name} after optimizer step")
+    
         acc = accuracy(outputs, labels, task="multiclass", num_classes=10)
         self.log("train_loss", loss, prog_bar=True, logger=True)
         self.log("train_acc", acc, prog_bar=True, logger=True)
-        return loss
+        #return loss
 
     def validation_step(self, batch, batch_idx):
         images, labels = batch
@@ -54,6 +74,7 @@ class ViTLightningModule(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         return optimizer
+
 
 
 # Model definition (same as before)
@@ -103,7 +124,9 @@ class Transformer(nn.Module):
             )
 
     def forward(self, x):
+        i = 0
         for attn, ff in self.layers:
+            i += 1
             x = attn(x) + x
             x = ff(x) + x
         return self.norm(x)
@@ -157,6 +180,7 @@ class ViT(nn.Module):
         return self.mlp_head(x)
 
 
+
 # Transforms and data loaders
 val_transform = transforms.Compose(
     [transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
@@ -176,30 +200,46 @@ train_transform = transforms.Compose(
 train_dataset = datasets.CIFAR10(root="./data", train=True, transform=train_transform, download=True)
 test_dataset = datasets.CIFAR10(root="./data", train=False, transform=val_transform, download=True)
 
-train_loader = DataLoader(train_dataset, batch_size=312, shuffle=True, num_workers=16)
-test_loader = DataLoader(test_dataset, batch_size=312, shuffle=False, num_workers=16)
+train_loader = DataLoader(train_dataset, batch_size=96, shuffle=True, num_workers=0)
+test_loader = DataLoader(test_dataset, batch_size=96, shuffle=False, num_workers=0)
 
 # Initialize ViT model and LightningModule
 model = ViT(
-    image_size=224,  # Keep this to ensure compatibility with common datasets
-    patch_size=16,  # You could increase to 32 for even faster training
-    num_classes=10,  # Depends on your dataset (10 for CIFAR-10)
-    dim=256,  # Reduced embedding dimension for faster training
-    depth=4,  # Fewer transformer layers
-    heads=4,  # Fewer attention heads
-    mlp_dim=512,  # Smaller feedforward network dimension
-    dropout=0.1,  # Keep some dropout for regularization
-    emb_dropout=0.1,  # Embedding dropout
+    image_size=224,        # Smaller image size for reduced complexity
+    patch_size=16,         # More patches for better granularity
+    dim=384,               # Reduced embedding dimension
+    depth=4,               # Fewer transformer layers
+    heads=4,               # Fewer attention heads
+    mlp_dim=1536,          # MLP layer dimension (4x dim)
+    dropout=0.1,           # Regularization via dropout
+    emb_dropout=0.1,       # Dropout for the embedding layer
+    channels=3,            # RGB images
+    dim_head=96,           # Dimension of each attention head
+    num_classes=10
 )
 
-vit_lightning_model = ViTLightningModule(model)
+
+
+vit_lightning_model = ViTLightningModule(model, lr=1e-5)
 # vit_lightning_model = torch.compile(vit_lightning_model)
 
 # Set up TensorBoard logger
-logger = TensorBoardLogger("tb_logs", name=f"ViT_CIFAR10_ternary")
+logger = TensorBoardLogger("tb_logs", name=f"ViT_CIFAR10_tternary")
+
+
 
 # Set up PyTorch Lightning trainer
-trainer = pl.Trainer(max_epochs=50, logger=logger, precision="32")
+trainer = pl.Trainer(
+    max_epochs=15,                      # Reduce the number of epochs (usually less than 10 is enough for this test)
+    logger=logger,
+    precision="32",              # Mixed precision for faster training
+    num_sanity_val_steps=0,              # Skip validation sanity checks
+    #limit_train_batches=1,               # Limit training to a single batch
+    #limit_val_batches=1,                 # Limit validation to a single batch
+    #overfit_batches=1,                    # Overfit to a single batch of data
+    #log_every_n_steps=1
+
+)
 
 # Train and validate the model
 trainer.fit(vit_lightning_model, train_loader, test_loader)

@@ -14,7 +14,8 @@ init(autoreset=True)
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import NeuroPress.QLayers as Q
-from NeuroPress import freeze, postquantize
+from NeuroPress import postquantize
+from NeuroPress.QLayers.Ternary import LinearWTA8, MyLinearWTA8
 from NeuroPress.Utils import get_device
 
 torch.manual_seed(42)
@@ -26,11 +27,10 @@ output_size = 10  # 10 classes for the digits 0-9
 batch_size = 512  # You can modify this as needed
 epochs = 1  # Number of training epochs
 learning_rate = 0.01  # learning rate
-num_workers = 8
+num_workers = 0
 device = get_device()  # Setting the device
 
-qlayer = Q.LinearWTA16  # Quantized layer example
-layer = nn.Linear
+layer = MyLinearWTA8
 
 
 # MLP model definition
@@ -38,17 +38,17 @@ class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
         self.fc1 = layer(input_size, hidden_sizes[0])
-        self.ln_1 = nn.LayerNorm(hidden_sizes[0])
+        #self.ln_1 = nn.LayerNorm(hidden_sizes[0])
         self.relu1 = nn.ReLU()
         self.fc2 = layer(hidden_sizes[0], hidden_sizes[1])
-        self.ln_2 = nn.LayerNorm(hidden_sizes[1])
+        #self.ln_2 = nn.LayerNorm(hidden_sizes[1])
         self.relu2 = nn.ReLU()
         self.fc3 = layer(hidden_sizes[1], output_size)
 
     def forward(self, x):
         x = x.view(-1, 784)  # Flatten the image
-        x = self.relu1(self.ln_1(self.fc1(x)))
-        x = self.relu2(self.ln_2(self.fc2(x)))
+        x = self.relu1(self.fc1(x))
+        x = self.relu2(self.fc2(x))
         x = self.fc3(x)
         return x
 
@@ -58,8 +58,8 @@ transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1
 train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
 
-train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=False)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=False)
 
 Qmodel = MLP().to(device)
 Qcriterion = nn.CrossEntropyLoss()
@@ -81,6 +81,7 @@ def print_error(msg):
 
 # Training the model
 def train_model(model, optimizer, criterion):
+    model.eval()
     model.train()
     for epoch in range(epochs):
         total_loss = 0
@@ -108,6 +109,22 @@ def train_model(model, optimizer, criterion):
     return model
 
 
+def check_train_eval_equivalence(model, input_data):
+    model.eval()  # Set to evaluation mode
+    with torch.no_grad():
+        eval_output = model(input_data)
+
+    model.train()  # Set to training mode
+    train_output = model(input_data)
+
+    # Check if the outputs are close
+    if torch.allclose(train_output, eval_output, atol=1e-5):
+        print(Fore.GREEN + "Train and Eval mode outputs are equivalent!")
+    else:
+        max_diff = torch.max(torch.abs(train_output - eval_output))
+        print(Fore.RED + f"Train and Eval mode outputs are different. Max difference: {max_diff.item()}")
+
+
 # Evaluating the model and return accuracy
 def evaluate_model(model, criterion):
     model.eval()
@@ -119,6 +136,7 @@ def evaluate_model(model, criterion):
             for data, target in ttest:
                 ttest.set_description("Evaluating")
                 data, target = data.to(device), target.to(device)
+                #check_train_eval_equivalence(model, data)
                 output = model(data)
                 loss = criterion(output, target)
                 test_loss += loss.item()
@@ -133,22 +151,9 @@ if __name__ == "__main__":
     # Dictionary to store accuracies for different models
     results = {}
 
-    # Training and evaluating the fully precision model
-    print_info("Training Fully Precision Model...")
-    train_model(Qmodel, Qoptimizer, Qcriterion)
-    print_info("Evaluating Fully Precision Model...")
-    loss, accuracy = evaluate_model(Qmodel, Qcriterion)
-    results["Fully Precision"] = accuracy
+    Qmodel = Qmodel.cuda()
+    Qmodel.train()
 
-    # Post quantizing and evaluating the model
-    print_warning("Post Quantizing Model...")
-    postquantize(Qmodel, qlinear=qlayer)
-    freeze(Qmodel)
-    print_info("Evaluating Post Quantized Model...")
-    loss, accuracy = evaluate_model(Qmodel, Qcriterion)
-    results["Post Quantized"] = accuracy
-
-    # Retraining with QAT and evaluating the model
 
     print_info("Retraining with QAT (Quantization Aware Training)...")
     Qoptimizer = optim.SGD(Qmodel.parameters(), lr=learning_rate)
@@ -156,8 +161,24 @@ if __name__ == "__main__":
     print_info("Evaluating QAT Trained Model...")
     loss, accuracy = evaluate_model(Qmodel, Qcriterion)
     results["QAT Trained"] = accuracy
+    
+    Qmodel.fc1.freeze()
+    Qmodel.fc2.freeze()
+    Qmodel.fc3.freeze()
+    sd = Qmodel.state_dict()
 
-    # Print summary of accuracies
+    
+    
+    Qmodel = MLP().cuda()
+    Qmodel.load_state_dict(sd)
+
+    loss, accuracy = evaluate_model(Qmodel, Qcriterion)
+    results["QAT Trained frozen"] = accuracy
+
+
+    loss, accuracy = evaluate_model(Qmodel, Qcriterion)
+    results["QAT Trained frozen loaded"] = accuracy
+    #Print summary of accuracies
     print_info("\n\n ====================== Summary of Model Accuracies: =======================")
     for model_type, acc in results.items():
         print(f"                    {model_type} Model Accuracy: {acc:.2f}%")

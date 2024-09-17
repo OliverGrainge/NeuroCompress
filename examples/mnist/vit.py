@@ -9,7 +9,7 @@ from einops.layers.torch import Rearrange
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from NeuroPress.QLayers.Ternary import LinearWTA8
+from NeuroPress.QLayers.Ternary import LinearWTA8, MyLinearWTA8
 from NeuroPress.Utils import RMSNorm
 
 qlayer = LinearWTA8
@@ -151,24 +151,37 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-val_transform = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),  # Resize images to 224x224
-        transforms.ToTensor(),  # Convert images to tensors
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Normalize the dataset
-    ]
-)
+class StackImages:
+    def __init__(self, n_images):
+        self.n_images = n_images
+
+    def __call__(self, img):
+        # Generate a list of `n_images` copies of the input image
+        img_stack = [img] * self.n_images
+        # Stack the images along the channel dimension
+        return torch.cat(img_stack, dim=0)
+    
+# Example transform pipeline with image stacking
+n_stacked_images = 3  # For example, stack 3 images
 
 train_transform = transforms.Compose(
     [
-        transforms.RandomResizedCrop((224, 224), scale=(0.8, 1.0)),  # Randomly crop and resize
-        transforms.RandomHorizontalFlip(),  # Random horizontal flip
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Color jitter
+        transforms.Resize((96, 96)),  # Resize images to 224x224
         transforms.ToTensor(),  # Convert images to tensors
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # Normalize the dataset
-        transforms.RandomErasing(),  # Random erasing
+        StackImages(n_stacked_images),  # Stack images along channel dimension
+        transforms.Normalize((0.5,) * n_stacked_images, (0.5,) * n_stacked_images),  # Normalize the stacked images
     ]
 )
+
+val_transform = transforms.Compose(
+    [
+        transforms.Resize((96, 96)),  # Resize images to 224x224
+        transforms.ToTensor(),  # Convert images to tensors
+        StackImages(n_stacked_images),  # Stack images along channel dimension
+        transforms.Normalize((0.5,) * n_stacked_images, (0.5,) * n_stacked_images),  # Normalize the stacked images
+    ]
+)
+
 
 
 train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=train_transform)
@@ -181,7 +194,19 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=128, shuffle=False, nu
 
 
 # Initialize the model
-model = ViT(image_size=224, patch_size=16, num_classes=102, dim=1024, depth=4, heads=4, mlp_dim=2048, dropout=0.1, emb_dropout=0.1)
+model = ViT(
+        image_size=224,        # Smaller image size for reduced complexity
+        patch_size=8,         # More patches for better granularity
+        dim=128,               # Reduced embedding dimension
+        depth=4,               # Fewer transformer layers
+        heads=4,               # Fewer attention heads
+        mlp_dim=128 * 4,          # MLP layer dimension (4x dim)
+        dropout=0.1,           # Regularization via dropout
+        emb_dropout=0.1,       # Dropout for the embedding layer
+        channels=3,            # RGB images
+        dim_head=128//4,           # Dimension of each attention head)
+        num_classes=10,
+)
 
 # Loss
 # Loss function and optimizer
