@@ -108,3 +108,14 @@ def postquantize(model: nn.Module, qlinear: nn.Module = None, qconv: nn.Module =
     else:
         postquantize_all(model, qlinear=qlinear, qconv=qconv)
 
+
+
+
+
+
+
+
+def freeze_model(model):
+    for module in model.modules():
+        if hasattr(module, 'freeze') and callable(getattr(module, 'freeze')):
+            module.freeze()
