@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from NeuroPress.QLayers.Ternary.triton_kernels.rmsnorm_kernel import fast_rms_layernorm
 
 
 def get_device():
@@ -9,18 +10,12 @@ def get_device():
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class RMSNorm(nn.Module):
-    def __init__(self, hidden_size, eps=1e-6):
-        """
-        BitnetRMSNorm is equivalent to T5LayerNorm
-        """
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(hidden_size))
+class RMSNorm(torch.nn.Module):
+    def __init__(self, shape, eps=1e-6):
+        super(RMSNorm, self).__init__()
         self.eps = eps
+        self.weight = torch.nn.Parameter(torch.ones(shape))
 
-    def forward(self, hidden_states):
-        input_dtype = hidden_states.dtype
-        hidden_states = hidden_states.to(torch.float32)
-        variance = hidden_states.pow(2).mean(-1, keepdim=True)
-        hidden_states = hidden_states * torch.rsqrt(variance + self.eps)
-        return self.weight * hidden_states.to(input_dtype)
+    def forward(self, x):
+        return fast_rms_layernorm(self.weight.to(x.dtype), x, self.eps).to(x.dtype)
+
