@@ -17,8 +17,6 @@ from .quant import ternary_quantize
 
 
 
-
-
 class LinearWTA8(nn.Linear):
     def __init__(
         self,
@@ -120,7 +118,6 @@ class LinearWTA8(nn.Linear):
         
         if key_weight in missing_keys and key_packed_weights in state_dict.keys() and key_weight_scale in state_dict.keys():
             self.freeze_state = True 
-            print("loading in frozen mode")
             self.packed_weights = state_dict[key_packed_weights]
             self.weight_scale = state_dict[key_weight_scale]
             missing_keys.remove(key_weight)
@@ -129,7 +126,6 @@ class LinearWTA8(nn.Linear):
 
         elif key_weight in state_dict.keys() and key_packed_weights not in state_dict.keys() and key_weight_scale not in state_dict.keys():
             self.freeze_state = False 
-            print("loading in unfrozen mode")
 
 
 
