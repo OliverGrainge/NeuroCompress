@@ -18,21 +18,24 @@ torch.set_float32_matmul_precision("medium")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from NeuroPress.QLayers.Ternary import LinearWTA8
+from NeuroPress.QLayers.Ternary import LinearWTA8, PLinearWTA8, P2LinearWTA8, P3LinearWTA8
 from NeuroPress import postquantize
 from NeuroPress.Utils import RMSNorm
 
 #qlayer = nn.Linear
-qlayer = LinearWTA8
+#qlayer = LinearWTA8
+qlayer = P3LinearWTA8
 
 
 # Define the ViT LightningModule
 class ViTLightningModule(pl.LightningModule):
-    def __init__(self, model, lr=1e-3):
+    def __init__(self, model, lr=1e-3, lambda_=0.02):
         super(ViTLightningModule, self).__init__()
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
         self.lr = lr
+        self.lambda_scale = lambda_
+        self.lambda_ = 0.0
 
     def forward(self, x):
         return self.model(x)
@@ -45,11 +48,30 @@ class ViTLightningModule(pl.LightningModule):
         loss = self.criterion(outputs, labels)
         if torch.isnan(loss) or torch.isinf(loss):
             print("NaN or Inf detected in loss")
-    
+        reg_loss = self.model.compute_reg_loss()
+        print(self.lambda_ * reg_loss.item(), loss.item())
         acc = accuracy(outputs, labels, task="multiclass", num_classes=10)
         self.log("train_loss", loss, prog_bar=True, logger=True)
         self.log("train_acc", acc, prog_bar=True, logger=True)
+        self.log("reg_loss", self.lambda_ * reg_loss)
+        loss = loss + self.lambda_ * reg_loss
+        self.log("total loss", loss)
+        self.training_step_end()
         return loss
+    
+    def training_step_end(self):
+        max_steps = self.trainer.max_epochs * 196 
+        t = self.trainer.global_step/max_steps
+        t = torch.tensor((t * 8) - 4)
+        def sigmoid(x): 
+            return 1/(1 + torch.exp(-x))
+        
+        for module in self.model.modules(): 
+            if isinstance(module, nn.Linear) and hasattr(module, 'q_lambda'):
+                module.q_lambda = sigmoid(t)
+        self.lambda_ = sigmoid(t) * self.lambda_scale
+
+
 
     def validation_step(self, batch, batch_idx):
         images, labels = batch
@@ -61,7 +83,7 @@ class ViTLightningModule(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+        optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=0.0)
         return optimizer
 
 
@@ -100,6 +122,7 @@ class Attention(nn.Module):
         out = torch.matmul(attn, v)
         out = rearrange(out, "b h n d -> b n (h d)")
         return self.to_out(out)
+    
 
 
 class Transformer(nn.Module):
@@ -119,6 +142,7 @@ class Transformer(nn.Module):
             x = attn(x) + x
             x = ff(x) + x
         return self.norm(x)
+
 
 
 class ViT(nn.Module):
@@ -167,6 +191,22 @@ class ViT(nn.Module):
         x = self.transformer(x)
         x = x.mean(dim=1) if self.pool == "mean" else x[:, 0]
         return self.mlp_head(x)
+    
+
+    def compute_reg_loss(self): 
+        # Initialize total_weight_reg on the correct device
+        total_weight_reg = torch.zeros(1, device=next(self.parameters()).device)
+        
+        # Iterate through modules to compute total weight regularization
+        for module in self.modules(): 
+            #print(module)
+            if isinstance(module, nn.Linear) and hasattr(module, 'compute_reg'):
+                #print(total_weight_reg)
+                total_weight_reg = total_weight_reg + module.compute_reg()
+        
+        return total_weight_reg
+            
+
 
 
 
@@ -206,11 +246,13 @@ model = ViT(
 
 
 
-vit_lightning_model = ViTLightningModule(model, lr=1e-4)
+vit_lightning_model = ViTLightningModule(model, lr=1e-4, lambda_=0.00001)
 # vit_lightning_model = torch.compile(vit_lightning_model)
 
 # Set up TensorBoard logger
-logger = TensorBoardLogger("tb_logs", name=f"ViT_CIFAR10_ttternary")
+q = qlayer(10, 10)
+logger = TensorBoardLogger("tb_logs", name=q.__repr__() + f"_lambda-{vit_lightning_model.lambda_}")
+#logger = TensorBoardLogger("tb_logs", name="bitnet")
 
 
 
