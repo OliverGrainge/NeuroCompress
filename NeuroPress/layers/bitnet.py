@@ -63,3 +63,53 @@ class BitLinear(BaseBitLinear):
             return self.infer_forward(x)
         else:
             return self.train_forward(x)
+
+    def _save_to_state_dict(self, destination, prefix, keep_vars):
+        super()._save_to_state_dict(destination, prefix, keep_vars)
+        if self.freeze_state:
+            key = prefix + "weight"
+            if key in destination:
+                del destination[key]
+
+    def _load_from_state_dict(
+        self,
+        state_dict,
+        prefix,
+        local_metadata,
+        strict,
+        missing_keys,
+        unexpected_keys,
+        error_msgs,
+    ):
+        key_weight = prefix + "weight"
+        key_packed_weights = prefix + "packed_weights"
+        key_weight_scale = prefix + "weight_scale"
+
+        super()._load_from_state_dict(
+            state_dict,
+            prefix,
+            local_metadata,
+            strict,
+            missing_keys,
+            unexpected_keys,
+            error_msgs,
+        )
+
+        if (
+            key_weight in missing_keys
+            and key_packed_weights in state_dict.keys()
+            and key_weight_scale in state_dict.keys()
+        ):
+            self.freeze_state = True
+            self.packed_weights = state_dict[key_packed_weights]
+            self.weight_scale = state_dict[key_weight_scale]
+            missing_keys.remove(key_weight)
+            unexpected_keys.remove(key_packed_weights)
+            unexpected_keys.remove(key_weight_scale)
+
+        elif (
+            key_weight in state_dict.keys()
+            and key_packed_weights not in state_dict.keys()
+            and key_weight_scale not in state_dict.keys()
+        ):
+            self.freeze_state = False
