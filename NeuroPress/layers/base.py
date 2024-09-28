@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import torch.nn as nn
 
 
-class BaseQuantizedLayer(nn.Module, ABC):
+class BaseQuantizedLayer(ABC):
     def __init__(self):
         super(BaseQuantizedLayer, self).__init__()
 
@@ -18,6 +18,13 @@ class BaseQuantizedLayer(nn.Module, ABC):
         pass
 
     @abstractmethod
+    def forward(self, x):
+        """forward method which calls either train_forward or infer_forward depending on the
+        situation.
+        """
+        pass
+
+    @abstractmethod
     def freeze(self, x):
         """permenantly quantize the layer for deployment."""
         pass
@@ -28,11 +35,9 @@ class BaseQuantizedLayer(nn.Module, ABC):
         pass
 
     @abstractmethod
-    def state_dict(self, destination=None, prefix="", keep_vars=False):
-        """adapt the state dictionary for inference or training ."""
-        pass
-
-    @abstractmethod
     def load_state_dict(self, state_dict, strict=True):
-        """loading the state dict, either in frozen model or training mode."""
+        """
+        loading the state dict, either in frozen model or training mode.
+            This depends on the state dictionary
+        """
         pass
