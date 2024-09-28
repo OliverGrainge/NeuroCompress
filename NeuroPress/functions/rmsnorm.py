@@ -3,11 +3,6 @@ import torch
 import triton
 import triton.language as tl
 
-# from NeuroPress.QLayers.Ternary.triton_kernels.utils import calculate_settings
-# from NeuroPress.QLayers.Ternary.triton_kernels.utils import calculate_settings
-
-
-# Kindly borrowed from UnSloth's implementation
 MAX_FUSED_SIZE = 65536
 next_power_of_2 = triton.next_power_of_2
 
