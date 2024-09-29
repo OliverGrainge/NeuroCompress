@@ -2,10 +2,10 @@ import torch
 import triton
 import triton.language as tl
 
-from ..utils import custom_autotune
+from NeuroPress.functions.utils import autotune, kernel_config_pruner
 
 
-@custom_autotune.autotune(
+@autotune(
     configs=[
         triton.Config(
             {
@@ -81,7 +81,7 @@ from ..utils import custom_autotune
     key=["M", "N", "K"],
     nearest_power_of_two=True,
     prune_configs_by={
-        "early_config_prune": custom_autotune.kernel_config_pruner,
+        "early_config_prune": kernel_config_pruner,
         "perf_model": None,
         "top_k": None,
     },
