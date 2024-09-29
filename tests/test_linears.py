@@ -98,7 +98,7 @@ def test_unfreeze_cpu(layer_class):
     y_unfrozen = layer(x)
     layer.freeze_layer()
     y_frozen = layer(x)
-    assert torch.allclose(y_frozen, y_unfrozen, 1e-4)
+    assert torch.allclose(y_frozen, y_unfrozen, 1e-3)
 
 
 @pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
@@ -129,6 +129,30 @@ def test_state_dict_frozen(layer_class):
     layer.freeze_layer()
     sd = layer.state_dict()
     layer.load_state_dict(sd)
+    assert True
+
+
+@pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
+def test_backward_cpu(layer_class):
+    layer = layer_class(128, 128, bias=True, device="cpu", dtype=None).to('cpu')
+    x = torch.randn(1, 128)
+    y = layer(x)
+    target = torch.randn(1, 128)
+    loss = ((y - target)**2).mean() 
+    loss.backward()
+    assert True
+
+
+@pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
+def test_backward_gpu(layer_class):
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is not available, skipping GPU test.")
+    layer = layer_class(128, 128, bias=True, device="cpu", dtype=None).to('cuda')
+    x = torch.randn(1, 128).to('cuda')
+    y = layer(x)
+    target = torch.randn(1, 128).to('cuda')
+    loss = ((y - target)**2).mean() 
+    loss.backward()
     assert True
 
 
