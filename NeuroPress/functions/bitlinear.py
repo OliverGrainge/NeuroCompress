@@ -218,10 +218,9 @@ if torch.cuda.is_available():
 
 
 def _cpu_bitlinear(a, b, int_per_2_bits=4, activation="", out_dtype=torch.float16):
-    w = unpack_ternary(b)
-    y = torch.matmul(a, w)
+    w = unpack_ternary(b.t())
+    y = torch.matmul(a.float(), w.t().float())
     return y.type(out_dtype)
-
 
 
 def bitlinear(a, b, int_per_2_bits=4, activation="", out_dtype=torch.float16):

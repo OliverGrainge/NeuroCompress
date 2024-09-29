@@ -29,8 +29,9 @@ def main():
     trainer = pl.Trainer(
         accelerator="gpu", 
         precision="32", 
-        max_epochs=3,
+        max_epochs=1,
         logger=logger,
+        log_every_n_steps=2
     )
 
     transform = transforms.Compose([

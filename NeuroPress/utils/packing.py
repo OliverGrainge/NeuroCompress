@@ -59,4 +59,4 @@ def unpack_ternary(x, n_bits=4):
     unpacked = torch.where(unpacked == 2, torch.tensor(-1, device=x.device), unpacked)
 
     # Riorganizza le dimensioni per ottenere il formato desiderato (*, K, N)
-    return unpacked.view(*x.shape[:-1], -1)
+    return unpacked.reshape(*x.shape[:-1], -1)
