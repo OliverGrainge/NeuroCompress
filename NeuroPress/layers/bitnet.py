@@ -76,12 +76,15 @@ class BitLinear(BaseBitLinear):
         q_weights = self.weight_quant(w)
         q_weights = torch.clamp((q_weights * self.weight_scale).round(), -1, 1).type(torch.int8)
         self.packed_weights = nn.Parameter(pack_ternary(q_weights).t().contiguous().to(device), requires_grad=False)
+        self.float_weight = self.weight.data 
+        del self.weight 
 
 
     def unfreeze_layer(self):
         self.freeze_state = False
         self.packed_weights = None
         self.weight_scale = None
+        self.weight = nn.Parameter(self.float_weight)
 
     @staticmethod
     def __repr__(): 
@@ -122,10 +125,12 @@ class BitLinear(BaseBitLinear):
             key_weight in missing_keys
             and key_packed_weights in state_dict.keys()
             and key_weight_scale in state_dict.keys()
-        ):
+        ):  
+
             self.freeze_state = True
             self.packed_weights = state_dict[key_packed_weights]
             self.weight_scale = state_dict[key_weight_scale]
+            
             missing_keys.remove(key_weight)
             unexpected_keys.remove(key_packed_weights)
             unexpected_keys.remove(key_weight_scale)
@@ -134,5 +139,5 @@ class BitLinear(BaseBitLinear):
             key_weight in state_dict.keys()
             and key_packed_weights not in state_dict.keys()
             and key_weight_scale not in state_dict.keys()
-        ):
+        ):  
             self.freeze_state = False
