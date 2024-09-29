@@ -14,9 +14,9 @@ from NeuroPress.models import MLP
 from pytorch_lightning.loggers import TensorBoardLogger
 
 def main(): 
-    batch_size = 32 
+    batch_size = 64
     hidden_size = 128
-    num_layers = 4 
+    num_layers = 5
     lr = 0.001
     qlayer = BitLinear
 
@@ -27,9 +27,9 @@ def main():
     module = ClassificationTrainer(model=model, lr=lr)
 
     trainer = pl.Trainer(
-        accelerator="auto", 
+        accelerator="gpu", 
         precision="32", 
-        max_epochs=5,
+        max_epochs=3,
         logger=logger,
     )
 
@@ -47,6 +47,10 @@ def main():
     val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False)
 
     trainer.fit(module, train_loader, val_loader)
+
+
+    model.freeze()
+    trainer.test(module, val_loader)
 
 
 

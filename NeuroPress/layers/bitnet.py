@@ -68,16 +68,17 @@ class BitLinear(BaseBitLinear):
         else:
             return self.train_forward(x)
         
-    def freeze(self):
+    def freeze_layer(self):
         self.freeze_state = True
         w = self.weight
+        device = self.weight.device
         self.weight_scale = 1.0 / w.abs().mean().clamp_(min=1e-5)
-        q_weights = self.weight_quant(w).cuda()
+        q_weights = self.weight_quant(w)
         q_weights = torch.clamp((q_weights * self.weight_scale).round(), -1, 1).type(torch.int8)
-        self.packed_weights = pack_ternary(q_weights).t().contiguous().cuda()
+        self.packed_weights = nn.Parameter(pack_ternary(q_weights).t().contiguous().to(device), requires_grad=False)
 
 
-    def unfreeze(self):
+    def unfreeze_layer(self):
         self.freeze_state = False
         self.packed_weights = None
         self.weight_scale = None
@@ -85,6 +86,7 @@ class BitLinear(BaseBitLinear):
     @staticmethod
     def __repr__(): 
         return "BitLinear"
+    
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         super()._save_to_state_dict(destination, prefix, keep_vars)
         if self.freeze_state:

@@ -32,4 +32,13 @@ class ClassificationTrainer(pl.LightningModule):
         self.log('val_loss', val_loss)
         self.log('val_acc', acc)
         return val_loss
+    
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self(x)
+        val_loss = self.criterion(y_hat, y)
+        acc = (y_hat.argmax(dim=1) == y).float().mean()
+        self.log('test_loss', val_loss)
+        self.log('test_acc', acc)
+        return val_loss
 

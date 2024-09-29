@@ -25,11 +25,11 @@ class BaseQuantizedLayer(ABC):
         pass
 
     @abstractmethod
-    def freeze(self, x):
+    def freeze_layer(self, x):
         """permenantly quantize the layer for deployment."""
         pass
 
     @abstractmethod
-    def unfreeze(self, x):
+    def unfreeze_layer(self, x):
         """unfreeze the layer for training."""
         pass

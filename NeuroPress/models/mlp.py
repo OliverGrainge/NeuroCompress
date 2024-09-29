@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F 
+from NeuroPress.models.base import Qmodel
 
-
-class MLP(nn.Module):
+class MLP(Qmodel):
     def __init__(self, layer_type, input_size, hidden_size, num_classes, num_layers):
         """
         Args:
