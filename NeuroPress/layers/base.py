@@ -33,11 +33,3 @@ class BaseQuantizedLayer(ABC):
     def unfreeze(self, x):
         """unfreeze the layer for training."""
         pass
-
-    @abstractmethod
-    def load_state_dict(self, state_dict, strict=True):
-        """
-        loading the state dict, either in frozen model or training mode.
-            This depends on the state dictionary
-        """
-        pass
