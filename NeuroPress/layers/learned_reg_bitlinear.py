@@ -90,7 +90,7 @@ class LRBitLinear1(nn.Linear):
         else:
             return self.train_forward(x)
         
-    def compute_reg(self):
+    def compute_reg_layer(self):
         quantized_weight = (self.weight * self.scale).round().clamp(-1, 1) / self.scale
         regularization = (self.weight - quantized_weight).abs().sum()
         return regularization
@@ -236,7 +236,7 @@ class LRBitLinear2(nn.Linear):
         else:
             return self.train_forward(x)
         
-    def compute_reg(self): 
+    def compute_reg_layer(self): 
         q_weight = (self.weight * self.scale).round().clamp_(-1, 1) / self.scale
         loss = torch.sum((self.weight - q_weight) ** 2)
         return loss
