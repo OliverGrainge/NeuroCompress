@@ -33,7 +33,7 @@ class ClassificationTrainer(pl.LightningModule):
 
     """
 
-    def __init__(self, model: nn.Module, lr: float = 0.001):
+    def __init__(self, model: nn.Module, lr: float = 0.001, reg: float=1e-5):
         """
         Initialize the ClassificationTrainer module.
 
@@ -49,6 +49,7 @@ class ClassificationTrainer(pl.LightningModule):
         super(ClassificationTrainer, self).__init__()
         self.model = model
         self.lr = lr
+        self.reg = reg 
         self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, x):
@@ -94,8 +95,12 @@ class ClassificationTrainer(pl.LightningModule):
         """
         x, y = batch
         y_hat = self(x)
-        loss = self.criterion(y_hat, y)
+        train_loss = self.criterion(y_hat, y)
+        reg_loss = self.model.compute_reg()
+        loss = train_loss + self.reg * reg_loss
         self.log("train_loss", loss)
+        self.log("reg_loss", self.reg * reg_loss)
+        self.log("loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -115,7 +120,7 @@ class ClassificationTrainer(pl.LightningModule):
         """
         x, y = batch
         y_hat = self(x)
-        val_loss = self.criterion(y_hat, y)
+        val_loss = self.criterion(y_hat, y) + self.reg * self.model.compute_reg()
         acc = (y_hat.argmax(dim=1) == y).float().mean()
         self.log("val_loss", val_loss)
         self.log("val_acc", acc)
@@ -138,8 +143,8 @@ class ClassificationTrainer(pl.LightningModule):
         """
         x, y = batch
         y_hat = self(x)
-        val_loss = self.criterion(y_hat, y)
+        test_loss = self.criterion(y_hat, y) + self.reg * self.model.compute_reg()
         acc = (y_hat.argmax(dim=1) == y).float().mean()
-        self.log("test_loss", val_loss)
+        self.log("test_loss", test_loss)
         self.log("test_acc", acc)
-        return val_loss
+        return test_loss
