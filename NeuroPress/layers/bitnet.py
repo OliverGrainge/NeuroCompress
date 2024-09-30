@@ -1,3 +1,23 @@
+"""
+Module: bitnet
+
+This module defines quantized linear layers for neural networks,
+utilizing bit-level quantization techniques to optimize performance
+and memory usage. It includes the `BaseBitLinear` class, which serves
+as a foundation for quantized linear layers, and the `BitLinear` class,
+which implements training and inference behaviors with quantization.
+
+Dependencies:
+    - torch
+    - torch.nn
+    - torch.nn.functional
+    - NeuroPress.functions.bitlinear.bitlinear
+    - NeuroPress.layers.base.BaseQuantizedLayer
+    - NeuroPress.functions.rmsnorm.rmsnorm
+    - NeuroPress.utils.pack_ternary
+    - NeuroPress.layers.rmsnorm.RMSNorm
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,7 +30,31 @@ from NeuroPress.layers.rmsnorm import RMSNorm
 
 
 class BaseBitLinear(BaseQuantizedLayer, nn.Linear):
+    """
+    Base class for quantized linear layers using bit-level quantization.
+
+    This class inherits from `BaseQuantizedLayer` and `nn.Linear`, providing
+    foundational quantization functionalities for linear layers in neural networks.
+    It includes methods for activation and weight quantization.
+
+    Args:
+        in_features (int): Size of each input sample.
+        out_features (int): Size of each output sample.
+        bias (bool, optional): If set to `False`, the layer will not learn an additive bias. Default: `True`.
+        device (torch.device, optional): The device on which the layer's parameters will be allocated.
+        dtype (torch.dtype, optional): The desired data type of the layer's parameters.
+    """
     def __init__(self, in_features, out_features, bias=True, device=None, dtype=None):
+        """
+        Initialize the BaseBitLinear layer.
+
+        Args:
+            in_features (int): Size of each input sample.
+            out_features (int): Size of each output sample.
+            bias (bool, optional): If set to `False`, the layer will not learn an additive bias. Default: `True`.
+            device (torch.device, optional): The device on which the layer's parameters will be allocated.
+            dtype (torch.dtype, optional): The desired data type of the layer's parameters.
+        """
         super(BaseQuantizedLayer, self).__init__()
         nn.Linear.__init__(
             in_features, out_features, bias=bias, device=device, dtype=dtype
@@ -18,6 +62,23 @@ class BaseBitLinear(BaseQuantizedLayer, nn.Linear):
 
     @staticmethod
     def activation_quant(x, dtype=None):
+        """
+        Quantize the activation tensor.
+
+        This method scales the input tensor `x`, rounds it to the nearest integer,
+        clamps the values to the range [-128, 127], and optionally casts it to the specified dtype.
+
+        Args:
+            x (torch.Tensor): The input tensor to quantize.
+            dtype (torch.dtype, optional): The desired data type of the output tensor.
+
+        Returns:
+            torch.Tensor: The quantized activation tensor.
+
+        Example:
+            >>> x = torch.randn(10, 10)
+            >>> quant_x = BaseBitLinear.activation_quant(x, dtype=torch.int8)
+        """
         scale = 127.0 / x.abs().max(dim=-1, keepdim=True).values.clamp_(min=1e-5)
         y = (x * scale).round().clamp_(-128, 127) / scale
         if dtype is not None:
@@ -26,13 +87,55 @@ class BaseBitLinear(BaseQuantizedLayer, nn.Linear):
 
     @staticmethod
     def weight_quant(w):
+        """
+        Quantize the weight tensor.
+
+        This method scales the input weight tensor `w` based on its mean absolute value,
+        rounds it to the nearest integer, clamps the values to the range [-1, 1],
+        and returns the quantized weights.
+
+        Args:
+            w (torch.Tensor): The weight tensor to quantize.
+
+        Returns:
+            torch.Tensor: The quantized weight tensor.
+
+        Example:
+            >>> w = torch.randn(10, 10)
+            >>> quant_w = BaseBitLinear.weight_quant(w)
+        """
         scale = 1.0 / w.abs().mean().clamp_(min=1e-5)
         u = (w * scale).round().clamp_(-1, 1) / scale
         return u
 
 
 class BitLinear(BaseBitLinear):
+    """
+    Quantized linear layer with support for training and inference modes.
+
+    This class extends `BaseBitLinear` and implements methods for forward passes
+    during training (`train_forward`) and inference (`infer_forward`). It also
+    includes functionality to freeze and unfreeze the layer, converting
+    between quantized and floating-point weights.
+
+    Attributes:
+        freeze_state (bool): Indicates whether the layer is in frozen (inference) mode.
+        rmsnorm (RMSNorm): Instance of RMSNorm for normalization.
+        packed_weights (torch.nn.Parameter, optional): Packed ternary weights for inference.
+        weight_scale (float, optional): Scaling factor for quantized weights.
+        float_weight (torch.Tensor, optional): Floating-point weights stored when freezing the layer.
+    """
     def __init__(self, in_features, out_features, bias=True, device=None, dtype=None):
+        """
+        Initialize the BitLinear layer.
+
+        Args:
+            in_features (int): Size of each input sample.
+            out_features (int): Size of each output sample.
+            bias (bool, optional): If set to `False`, the layer will not learn an additive bias. Default: `True`.
+            device (torch.device, optional): The device on which the layer's parameters will be allocated.
+            dtype (torch.dtype, optional): The desired data type of the layer's parameters.
+        """
         super(BaseQuantizedLayer, self).__init__(
             in_features=in_features,
             out_features=out_features,
@@ -45,6 +148,20 @@ class BitLinear(BaseBitLinear):
         self.rmsnorm = RMSNorm(in_features)
 
     def train_forward(self, x):
+        """
+        Forward pass during training.
+
+        Applies RMS normalization, quantizes activations and weights, and performs a linear transformation.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape `(batch_size, in_features)`.
+
+        Returns:
+            torch.Tensor: Output tensor after linear transformation.
+
+        Raises:
+            RuntimeError: If the weights are not initialized.
+        """
         if self.weight is None:
             raise RuntimeError("Weights are not initialized for training.")
         w = self.weight
@@ -55,6 +172,21 @@ class BitLinear(BaseBitLinear):
         return y
 
     def infer_forward(self, x):
+        """
+        Forward pass during inference.
+
+        Applies RMS normalization, quantizes activations, and performs a bitlinear operation
+        using packed ternary weights.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape `(batch_size, in_features)`.
+
+        Returns:
+            torch.Tensor: Output tensor after linear transformation.
+
+        Raises:
+            AttributeError: If `packed_weights` or `weight_scale` are not set.
+        """
         x = rmsnorm(self.rmsnorm.weight, x, self.rmsnorm.eps)
         scale_x = 127.0 / x.abs().max(dim=-1, keepdim=True).values.clamp_(min=1e-5)
         x_quant = (x * scale_x).round().clamp_(-128, 127).type(torch.int8)
@@ -63,12 +195,30 @@ class BitLinear(BaseBitLinear):
         return y
 
     def forward(self, x):
+        """
+        Forward pass that switches between training and inference behaviors.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape `(batch_size, in_features)`.
+
+        Returns:
+            torch.Tensor: Output tensor after linear transformation.
+        """
         if self.freeze_state:
             return self.infer_forward(x)
         else:
             return self.train_forward(x)
         
     def freeze_layer(self):
+        """
+        Freeze the layer for inference.
+
+        This method quantizes the weights, packs them into ternary format, and removes
+        the floating-point weights to optimize for inference.
+
+        Returns:
+            None
+        """
         self.freeze_state = True
         w = self.weight
         device = self.weight.device
@@ -81,6 +231,15 @@ class BitLinear(BaseBitLinear):
 
 
     def unfreeze_layer(self):
+        """
+        Unfreeze the layer for training.
+
+        This method restores the floating-point weights from the stored data and removes
+        the packed ternary weights and scaling factor.
+
+        Returns:
+            None
+        """
         self.freeze_state = False
         self.packed_weights = None
         self.weight_scale = None
@@ -88,9 +247,28 @@ class BitLinear(BaseBitLinear):
 
     @staticmethod
     def __repr__(): 
+        """
+        Return the string representation of the BitLinear layer.
+
+        Returns:
+            str: The string "BitLinear".
+        """
         return "BitLinear"
     
     def _save_to_state_dict(self, destination, prefix, keep_vars):
+        """
+        Save the layer's state to the state dictionary.
+
+        Overrides the base method to exclude the floating-point weights when the layer is frozen.
+
+        Args:
+            destination (dict): The destination dictionary.
+            prefix (str): The prefix for the state keys.
+            keep_vars (bool): Whether to keep variables.
+
+        Returns:
+            None
+        """
         super()._save_to_state_dict(destination, prefix, keep_vars)
         if self.freeze_state:
             key = prefix + "weight"
@@ -107,6 +285,23 @@ class BitLinear(BaseBitLinear):
         unexpected_keys,
         error_msgs,
     ):
+        """
+        Load the layer's state from the state dictionary.
+
+        Overrides the base method to handle both frozen and unfrozen states.
+
+        Args:
+            state_dict (dict): The state dictionary containing parameters and buffers.
+            prefix (str): The prefix for the state keys.
+            local_metadata (dict): Metadata of the state.
+            strict (bool): Whether to strictly enforce that the keys in `state_dict` match the keys returned by this module's `state_dict` function.
+            missing_keys (list): A list to append missing keys to.
+            unexpected_keys (list): A list to append unexpected keys to.
+            error_msgs (list): A list to append error messages to.
+
+        Returns:
+            None
+        """
         key_weight = prefix + "weight"
         key_packed_weights = prefix + "packed_weights"
         key_weight_scale = prefix + "weight_scale"
