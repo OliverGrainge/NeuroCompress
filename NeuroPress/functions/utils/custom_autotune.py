@@ -8,7 +8,6 @@ import triton
 #  code based https://github.com/fpgaminer/GPTQ-triton
 
 
-
 class CustomizedTritonAutoTuner(triton.KernelInterface):
     def __init__(
         self,
