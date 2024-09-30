@@ -106,15 +106,9 @@ class PLRBitLinear1(nn.Linear):
         return "PLRBitLinear1"
 
     def compute_reg(self):
-        weight = self.weight
-        scale = self.scale
-
-        def quant(w, scale):
-            u = (w * scale).round().clamp_(-1, 1) / scale
-            return u
-
-        res = weight - quant(weight, scale)
-        return res.abs().sum()
+        quantized_weight = (self.weight * self.scale).round().clamp(-1, 1) / self.scale
+        regularization = (self.weight - quantized_weight).abs().sum()
+        return regularization
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         super()._save_to_state_dict(destination, prefix, keep_vars)
@@ -265,16 +259,10 @@ class PLRBitLinear2(nn.Linear):
     def __repr__(self):
         return "PLRBitLinear2"
 
-    def compute_reg(self):
-        weight = self.weight
-        scale = self.scale
-
-        def quant(w, scale):
-            u = (w * scale).round().clamp_(-1, 1) / scale
-            return u
-
-        res = weight - quant(weight, scale)
-        return res.abs().sum()
+    def compute_reg(self): 
+        q_weight = (self.weight * self.scale).round().clamp_(-1, 1) / self.scale
+        loss = torch.sum((self.weight - q_weight) ** 2)
+        return loss
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         super()._save_to_state_dict(destination, prefix, keep_vars)

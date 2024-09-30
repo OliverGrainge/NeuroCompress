@@ -91,15 +91,10 @@ class LRBitLinear1(nn.Linear):
             return self.train_forward(x)
         
     def compute_reg(self):
-        weight = self.weight
-        scale = self.scale
+        quantized_weight = (self.weight * self.scale).round().clamp(-1, 1) / self.scale
+        regularization = (self.weight - quantized_weight).abs().sum()
+        return regularization
 
-        def quant(w, scale):
-            u = (w * scale).round().clamp_(-1, 1) / scale
-            return u
-
-        res = weight - quant(weight, scale)
-        return res.abs().sum()
 
     def __repr__(self):
         return "LRBitLinear1"
@@ -241,16 +236,10 @@ class LRBitLinear2(nn.Linear):
         else:
             return self.train_forward(x)
         
-    def compute_reg(self):
-        weight = self.weight
-        scale = self.scale
-
-        def quant(w, scale):
-            u = (w * scale).round().clamp_(-1, 1) / scale
-            return u
-
-        res = weight - quant(weight, scale)
-        return res.abs().sum()
+    def compute_reg(self): 
+        q_weight = (self.weight * self.scale).round().clamp_(-1, 1) / self.scale
+        loss = torch.sum((self.weight - q_weight) ** 2)
+        return loss
 
     def __repr__(self):
         return "LRBitLinear2"
