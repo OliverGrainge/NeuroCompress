@@ -179,3 +179,20 @@ def test_compute_reg_gpu(layer_class):
     loss = layer.compute_reg_layer()
     assert loss >= 0 
 
+
+@pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
+def test_compute_reg_dtype(layer_class):
+    if not hasattr(layer_class, "compute_reg_layer"):
+        pytest.skip("Layer is not regularized")
+    if not torch.cuda.is_available:
+        pytest.skip("CUDA is not available, skipping GPU test.")
+    layer = layer_class(128, 128, bias=True, device="cuda", dtype=None).to("cuda")
+    loss = layer.compute_reg_layer()
+    assert loss.dtype == torch.float
+
+
+@pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
+def test_name_object(layer_class):
+    layer = layer_class(128, 128, bias=True, device="cpu", dtype=None).to("cpu")
+    assert isinstance(layer.__repr__(), str)
+

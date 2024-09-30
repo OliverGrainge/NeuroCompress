@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
+import wandb 
 
 class ClassificationTrainer(pl.LightningModule):
     """
@@ -33,7 +33,7 @@ class ClassificationTrainer(pl.LightningModule):
 
     """
 
-    def __init__(self, model: nn.Module, lr: float = 0.001, reg: float=1e-5):
+    def __init__(self, model: nn.Module, lr: float = 0.001, reg: float=1e-4):
         """
         Initialize the ClassificationTrainer module.
 
@@ -98,7 +98,7 @@ class ClassificationTrainer(pl.LightningModule):
         train_loss = self.criterion(y_hat, y)
         reg_loss = self.model.compute_reg()
         loss = train_loss + self.reg * reg_loss
-        self.log("train_loss", loss)
+        self.log("train_loss", train_loss)
         self.log("reg_loss", self.reg * reg_loss)
         self.log("loss", loss)
         return loss
@@ -143,8 +143,24 @@ class ClassificationTrainer(pl.LightningModule):
         """
         x, y = batch
         y_hat = self(x)
-        test_loss = self.criterion(y_hat, y) + self.reg * self.model.compute_reg()
+        test_loss = self.criterion(y_hat, y)
         acc = (y_hat.argmax(dim=1) == y).float().mean()
         self.log("test_loss", test_loss)
         self.log("test_acc", acc)
         return test_loss
+    
+    def on_train_end(self):
+        # Check if the logger is wandb or tensorboard
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                # If using Weights and Biases (wandb)
+                if isinstance(self.logger, pl.loggers.WandbLogger):
+                    wandb.log({f'{name}_weights': wandb.Histogram(param.cpu().numpy())})
+                    if param.grad is not None:
+                        wandb.log({f'{name}_gradients': wandb.Histogram(param.grad.cpu().numpy())})
+                
+                # If using TensorBoard
+                elif isinstance(self.logger, pl.loggers.TensorBoardLogger):
+                    self.logger.experiment.add_histogram(f'{name}_weights', param, self.current_epoch)
+                    if param.grad is not None:
+                        self.logger.experiment.add_histogram(f'{name}_gradients', param.grad, self.current_epoch)

@@ -90,7 +90,7 @@ class LBitLinear(nn.Linear):
         else:
             return self.train_forward(x)
 
-    def __repr__(self):
+    def __repr__(self,):
         return "LBitLinear"
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):

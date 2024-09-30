@@ -182,8 +182,7 @@ class BitLinear(BaseBitLinear):
         self.scale = None
         self.weight = nn.Parameter(self.float_weight)
 
-    @staticmethod
-    def __repr__():
+    def __repr__(self,):
         """
         Return the string representation of the BitLinear layer.
 

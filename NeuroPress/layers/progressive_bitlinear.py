@@ -102,7 +102,7 @@ class PLRBitLinear1(nn.Linear):
         else:
             return self.train_forward(x)
 
-    def __repr__(self):
+    def __repr__(self,):
         return "PLRBitLinear1"
 
     def compute_reg_layer(self):
@@ -256,7 +256,7 @@ class PLRBitLinear2(nn.Linear):
         else:
             return self.train_forward(x)
 
-    def __repr__(self):
+    def __repr__(self,):
         return "PLRBitLinear2"
 
     def compute_reg_layer(self): 

@@ -96,7 +96,7 @@ class LRBitLinear1(nn.Linear):
         return regularization
 
 
-    def __repr__(self):
+    def __repr__(self,):
         return "LRBitLinear1"
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
@@ -241,7 +241,7 @@ class LRBitLinear2(nn.Linear):
         loss = torch.sum((self.weight - q_weight) ** 2)
         return loss
 
-    def __repr__(self):
+    def __repr__(self,):
         return "LRBitLinear2"
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):

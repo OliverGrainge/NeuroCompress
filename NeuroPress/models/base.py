@@ -112,9 +112,11 @@ class Qmodel(nn.Module):
             tensor representing the loss for that layer.
 
         """
-        reg_loss = torch.tensor([0]).to(next(self.parameters()).device)
+        reg_loss = torch.tensor([0.0]).to(next(self.parameters()).device).float()
         for module in self.modules():
             if hasattr(module, "compute_reg_layer"):
                 reg_loss += module.compute_reg_layer()
         return reg_loss
+    
+
 
