@@ -8,8 +8,8 @@ quantized weights are utilized for efficient computation, while unfreezing allow
 training or fine-tuning the model with floating-point weights.
 """
 
-import torch 
-import torch.nn as nn 
+import torch
+import torch.nn as nn
 
 
 class Qmodel(nn.Module):
@@ -27,36 +27,11 @@ class Qmodel(nn.Module):
 
     Args:
         None
+    """
 
-    Example:
-        ```python
-        import torch.nn as nn
-        from qmodel_base import Qmodel
-        from NeuroPress.layers.bitlinear import BitLinear
-
-        class SampleModel(Qmodel):
-            def __init__(self):
-                super(SampleModel, self).__init__()
-                self.fc1 = BitLinear(784, 256)
-                self.fc2 = BitLinear(256, 10)
-
-            def forward(self, x):
-                x = self.fc1(x)
-                x = torch.relu(x)
-                x = self.fc2(x)
-                return x
-
-        # Initialize the model
-        model = SampleModel()
-
-        # Freeze the quantized layers for inference
-        model.freeze()
-
-        # Unfreeze the layers for training
-        model.unfreeze()
-        ```
-    """ 
-    def __init__(self,):
+    def __init__(
+        self,
+    ):
         """
         Initialize the Qmodel.
 
@@ -66,18 +41,10 @@ class Qmodel(nn.Module):
 
         Args:
             None
-
-        Example:
-            ```python
-            from qmodel_base import Qmodel
-
-            # Initialize the base model
-            model = Qmodel()
-            ```
         """
         super().__init__()
 
-    def freeze(self): 
+    def freeze(self):
         """
         Freeze Quantized Layers in the Model.
 
@@ -93,18 +60,12 @@ class Qmodel(nn.Module):
 
         Raises:
             AttributeError: If a module intended to be frozen does not have a `freeze_layer` method.
-
-        Example:
-            ```python
-            # Freeze all quantized layers in the model
-            model.freeze()
-            ```
         """
-        for module in self.modules(): 
-            if hasattr(module, 'freeze_layer'):
+        for module in self.modules():
+            if hasattr(module, "freeze_layer"):
                 module.freeze_layer()
-    
-    def unfreeze(self): 
+
+    def unfreeze(self):
         """
         Unfreeze Quantized Layers in the Model.
 
@@ -122,12 +83,7 @@ class Qmodel(nn.Module):
         Raises:
             AttributeError: If a module intended to be unfrozen does not have an `unfreeze_layer` method.
 
-        Example:
-            ```python
-            # Unfreeze all quantized layers in the model for training
-            model.unfreeze()
-            ```
         """
-        for module in self.modules(): 
-            if hasattr(module, 'unfreeze_layer'):
+        for module in self.modules():
+            if hasattr(module, "unfreeze_layer"):
                 module.unfreeze_layer()

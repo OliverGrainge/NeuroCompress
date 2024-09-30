@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroPress.layers.bitnet &mdash; NeuroPress 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            NeuroPress
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">NeuroPress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.functions.html">NeuroPress.functions package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.functions.utils.html">NeuroPress.functions.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.layers.html">NeuroPress.layers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.models.html">NeuroPress.models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.trainers.html">NeuroPress.trainers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.utils.html">NeuroPress.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">NeuroPress</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">NeuroPress.layers.bitnet</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for NeuroPress.layers.bitnet</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module: bitnet</span>
+
+<span class="sd">This module defines quantized linear layers for neural networks,</span>
+<span class="sd">utilizing bit-level quantization techniques to optimize performance</span>
+<span class="sd">and memory usage. It includes the `BaseBitLinear` class, which serves</span>
+<span class="sd">as a foundation for quantized linear layers, and the `BitLinear` class,</span>
+<span class="sd">which implements training and inference behaviors with quantization.</span>
+
+<span class="sd">Dependencies:</span>
+<span class="sd">    - torch</span>
+<span class="sd">    - torch.nn</span>
+<span class="sd">    - torch.nn.functional</span>
+<span class="sd">    - NeuroPress.functions.bitlinear.bitlinear</span>
+<span class="sd">    - NeuroPress.layers.base.BaseQuantizedLayer</span>
+<span class="sd">    - NeuroPress.functions.rmsnorm.rmsnorm</span>
+<span class="sd">    - NeuroPress.utils.pack_ternary</span>
+<span class="sd">    - NeuroPress.layers.rmsnorm.RMSNorm</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="kn">from</span> <span class="nn">NeuroPress.functions.bitlinear</span> <span class="kn">import</span> <span class="n">bitlinear</span>
+<span class="kn">from</span> <span class="nn">NeuroPress.functions.rmsnorm</span> <span class="kn">import</span> <span class="n">rmsnorm</span>
+<span class="kn">from</span> <span class="nn">NeuroPress.layers.base</span> <span class="kn">import</span> <span class="n">BaseQuantizedLayer</span>
+<span class="kn">from</span> <span class="nn">NeuroPress.layers.rmsnorm</span> <span class="kn">import</span> <span class="n">RMSNorm</span>
+<span class="kn">from</span> <span class="nn">NeuroPress.utils</span> <span class="kn">import</span> <span class="n">pack_ternary</span>
+
+
+<div class="viewcode-block" id="BaseBitLinear">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BaseBitLinear">[docs]</a>
+<span class="k">class</span> <span class="nc">BaseBitLinear</span><span class="p">(</span><span class="n">BaseQuantizedLayer</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for quantized linear layers using bit-level quantization.</span>
+
+<span class="sd">    This class inherits from `BaseQuantizedLayer` and `nn.Linear`, providing</span>
+<span class="sd">    foundational quantization functionalities for linear layers in neural networks.</span>
+<span class="sd">    It includes methods for activation and weight quantization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        in_features (int): Size of each input sample.</span>
+<span class="sd">        out_features (int): Size of each output sample.</span>
+<span class="sd">        bias (bool, optional): If set to `False`, the layer will not learn an additive bias. Default: `True`.</span>
+<span class="sd">        device (torch.device, optional): The device on which the layer&#39;s parameters will be allocated.</span>
+<span class="sd">        dtype (torch.dtype, optional): The desired data type of the layer&#39;s parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_features</span><span class="p">,</span> <span class="n">out_features</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the BaseBitLinear layer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            in_features (int): Size of each input sample.</span>
+<span class="sd">            out_features (int): Size of each output sample.</span>
+<span class="sd">            bias (bool, optional): If set to `False`, the layer will not learn an additive bias. Default: `True`.</span>
+<span class="sd">            device (torch.device, optional): The device on which the layer&#39;s parameters will be allocated.</span>
+<span class="sd">            dtype (torch.dtype, optional): The desired data type of the layer&#39;s parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BaseQuantizedLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="p">,</span> <span class="n">out_features</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseBitLinear.activation_quant">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BaseBitLinear.activation_quant">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">activation_quant</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quantize the activation tensor.</span>
+
+<span class="sd">        This method scales the input tensor `x`, rounds it to the nearest integer,</span>
+<span class="sd">        clamps the values to the range [-128, 127], and optionally casts it to the specified dtype.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (torch.Tensor): The input tensor to quantize.</span>
+<span class="sd">            dtype (torch.dtype, optional): The desired data type of the output tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: The quantized activation tensor.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="mf">127.0</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="o">-</span><span class="mi">128</span><span class="p">,</span> <span class="mi">127</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="BaseBitLinear.weight_quant">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BaseBitLinear.weight_quant">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">weight_quant</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quantize the weight tensor.</span>
+
+<span class="sd">        This method scales the input weight tensor `w` based on its mean absolute value,</span>
+<span class="sd">        rounds it to the nearest integer, clamps the values to the range [-1, 1],</span>
+<span class="sd">        and returns the quantized weights.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            w (torch.Tensor): The weight tensor to quantize.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: The quantized weight tensor.</span>
+
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="k">return</span> <span class="n">u</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BitLinear">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BitLinear">[docs]</a>
+<span class="k">class</span> <span class="nc">BitLinear</span><span class="p">(</span><span class="n">BaseBitLinear</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_features</span><span class="p">,</span> <span class="n">out_features</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BaseQuantizedLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">in_features</span><span class="p">,</span>
+            <span class="n">out_features</span><span class="o">=</span><span class="n">out_features</span><span class="p">,</span>
+            <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rmsnorm</span> <span class="o">=</span> <span class="n">RMSNorm</span><span class="p">(</span><span class="n">in_features</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BitLinear.train_forward">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BitLinear.train_forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">train_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Weights are not initialized for training.&quot;</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span>
+        <span class="n">x_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rmsnorm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x_quant</span> <span class="o">=</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">activation_quant</span><span class="p">(</span><span class="n">x_norm</span><span class="p">)</span> <span class="o">-</span> <span class="n">x_norm</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">w_quant</span> <span class="o">=</span> <span class="n">w</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_quant</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x_quant</span><span class="p">,</span> <span class="n">w_quant</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="BitLinear.infer_forward">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BitLinear.infer_forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">infer_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">rmsnorm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rmsnorm</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rmsnorm</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+        <span class="n">scale_x</span> <span class="o">=</span> <span class="mf">127.0</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+        <span class="n">x_quant</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">scale_x</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="o">-</span><span class="mi">128</span><span class="p">,</span> <span class="mi">127</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">bitlinear</span><span class="p">(</span><span class="n">x_quant</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">packed_weights</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span> <span class="n">scale_x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_scale</span>
+        <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="BitLinear.forward">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BitLinear.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">infer_forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BitLinear.freeze_layer">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BitLinear.freeze_layer">[docs]</a>
+    <span class="k">def</span> <span class="nf">freeze_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Freeze the layer for inference.</span>
+
+<span class="sd">        This method quantizes the weights, packs them into ternary format, and removes</span>
+<span class="sd">        the floating-point weights to optimize for inference.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_scale</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+        <span class="n">q_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_quant</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">q_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">((</span><span class="n">q_weights</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_scale</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">int8</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packed_weights</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">pack_ternary</span><span class="p">(</span><span class="n">q_weights</span><span class="p">)</span><span class="o">.</span><span class="n">t</span><span class="p">()</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">float_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span></div>
+
+
+<div class="viewcode-block" id="BitLinear.unfreeze_layer">
+<a class="viewcode-back" href="../../../NeuroPress.layers.html#NeuroPress.layers.bitnet.BitLinear.unfreeze_layer">[docs]</a>
+    <span class="k">def</span> <span class="nf">unfreeze_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unfreeze the layer for training.</span>
+
+<span class="sd">        This method restores the floating-point weights from the stored data and removes</span>
+<span class="sd">        the packed ternary weights and scaling factor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packed_weights</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_scale</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">float_weight</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the string representation of the BitLinear layer.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The string &quot;BitLinear&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;BitLinear&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_save_to_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">keep_vars</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the layer&#39;s state to the state dictionary.</span>
+
+<span class="sd">        Overrides the base method to exclude the floating-point weights when the layer is frozen.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            destination (dict): The destination dictionary.</span>
+<span class="sd">            prefix (str): The prefix for the state keys.</span>
+<span class="sd">            keep_vars (bool): Whether to keep variables.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_save_to_state_dict</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">keep_vars</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;weight&quot;</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">destination</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">destination</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_load_from_state_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">state_dict</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">,</span>
+        <span class="n">local_metadata</span><span class="p">,</span>
+        <span class="n">strict</span><span class="p">,</span>
+        <span class="n">missing_keys</span><span class="p">,</span>
+        <span class="n">unexpected_keys</span><span class="p">,</span>
+        <span class="n">error_msgs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the layer&#39;s state from the state dictionary.</span>
+
+<span class="sd">        Overrides the base method to handle both frozen and unfrozen states.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state_dict (dict): The state dictionary containing parameters and buffers.</span>
+<span class="sd">            prefix (str): The prefix for the state keys.</span>
+<span class="sd">            local_metadata (dict): Metadata of the state.</span>
+<span class="sd">            strict (bool): Whether to strictly enforce that the keys in `state_dict` match the keys returned by this module&#39;s `state_dict` function.</span>
+<span class="sd">            missing_keys (list): A list to append missing keys to.</span>
+<span class="sd">            unexpected_keys (list): A list to append unexpected keys to.</span>
+<span class="sd">            error_msgs (list): A list to append error messages to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key_weight</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;weight&quot;</span>
+        <span class="n">key_packed_weights</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;packed_weights&quot;</span>
+        <span class="n">key_weight_scale</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;weight_scale&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_load_from_state_dict</span><span class="p">(</span>
+            <span class="n">state_dict</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="p">,</span>
+            <span class="n">local_metadata</span><span class="p">,</span>
+            <span class="n">strict</span><span class="p">,</span>
+            <span class="n">missing_keys</span><span class="p">,</span>
+            <span class="n">unexpected_keys</span><span class="p">,</span>
+            <span class="n">error_msgs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">key_weight</span> <span class="ow">in</span> <span class="n">missing_keys</span>
+            <span class="ow">and</span> <span class="n">key_packed_weights</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="n">key_weight_scale</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">):</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">packed_weights</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="n">key_packed_weights</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weight_scale</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="n">key_weight_scale</span><span class="p">]</span>
+
+            <span class="n">missing_keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key_weight</span><span class="p">)</span>
+            <span class="n">unexpected_keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key_packed_weights</span><span class="p">)</span>
+            <span class="n">unexpected_keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key_weight_scale</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">key_weight</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="n">key_packed_weights</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="n">key_weight_scale</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">freeze_state</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Oliver Grainge.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

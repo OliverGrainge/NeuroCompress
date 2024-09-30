@@ -27,22 +27,8 @@ class RMSNorm(nn.Module):
     Args:
         shape (int or tuple): The shape of the weight parameter. Typically matches the last dimension of the input.
         eps (float, optional): A small value to prevent division by zero. Default is `1e-6`.
-
-    Example:
-        ```python
-        import torch
-        from rmsnorm_layer import RMSNorm
-
-        # Initialize RMSNorm with feature size 128
-        rms_norm = RMSNorm(shape=128)
-
-        # Create a sample input tensor of shape (batch_size, feature_size)
-        x = torch.randn(32, 128)
-
-        # Apply RMS normalization
-        normalized_x = rms_norm(x)
-        ```
     """
+
     def __init__(self, shape, eps=1e-6):
         """
         Initialize the RMSNorm layer.
@@ -68,11 +54,5 @@ class RMSNorm(nn.Module):
         Returns:
             torch.Tensor: The RMS-normalized tensor, scaled by `self.weight`. The output shape matches the input shape.
 
-        Example:
-            ```python
-            # Continuing from the previous example
-            normalized_x = rms_norm(x)
-            print(normalized_x.shape)  # Output: torch.Size([32, 128])
-            ```
         """
         return rmsnorm(self.weight.to(x.dtype), x, self.eps).to(x.dtype)

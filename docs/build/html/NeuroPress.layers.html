@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroPress.layers package &mdash; NeuroPress 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="NeuroPress.models package" href="NeuroPress.models.html" />
+    <link rel="prev" title="NeuroPress.functions.utils package" href="NeuroPress.functions.utils.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            NeuroPress
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="modules.html">NeuroPress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.functions.html">NeuroPress.functions package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.functions.utils.html">NeuroPress.functions.utils package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">NeuroPress.layers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.layers.base">NeuroPress.layers.base module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer"><code class="docutils literal notranslate"><span class="pre">BaseQuantizedLayer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer.forward"><code class="docutils literal notranslate"><span class="pre">BaseQuantizedLayer.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer.freeze_layer"><code class="docutils literal notranslate"><span class="pre">BaseQuantizedLayer.freeze_layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer.infer_forward"><code class="docutils literal notranslate"><span class="pre">BaseQuantizedLayer.infer_forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer.train_forward"><code class="docutils literal notranslate"><span class="pre">BaseQuantizedLayer.train_forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer.unfreeze_layer"><code class="docutils literal notranslate"><span class="pre">BaseQuantizedLayer.unfreeze_layer()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.layers.bitnet">NeuroPress.layers.bitnet module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.layers.bitnet.BaseBitLinear"><code class="docutils literal notranslate"><span class="pre">BaseBitLinear</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BaseBitLinear.activation_quant"><code class="docutils literal notranslate"><span class="pre">BaseBitLinear.activation_quant()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BaseBitLinear.weight_quant"><code class="docutils literal notranslate"><span class="pre">BaseBitLinear.weight_quant()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.layers.bitnet.BitLinear"><code class="docutils literal notranslate"><span class="pre">BitLinear</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BitLinear.forward"><code class="docutils literal notranslate"><span class="pre">BitLinear.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BitLinear.freeze_layer"><code class="docutils literal notranslate"><span class="pre">BitLinear.freeze_layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BitLinear.infer_forward"><code class="docutils literal notranslate"><span class="pre">BitLinear.infer_forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BitLinear.train_forward"><code class="docutils literal notranslate"><span class="pre">BitLinear.train_forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.bitnet.BitLinear.unfreeze_layer"><code class="docutils literal notranslate"><span class="pre">BitLinear.unfreeze_layer()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.layers.rmsnorm">NeuroPress.layers.rmsnorm module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.layers.rmsnorm.RMSNorm"><code class="docutils literal notranslate"><span class="pre">RMSNorm</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.rmsnorm.RMSNorm.eps"><code class="docutils literal notranslate"><span class="pre">RMSNorm.eps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.rmsnorm.RMSNorm.weight"><code class="docutils literal notranslate"><span class="pre">RMSNorm.weight</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.layers.rmsnorm.RMSNorm.forward"><code class="docutils literal notranslate"><span class="pre">RMSNorm.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.layers">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.models.html">NeuroPress.models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.trainers.html">NeuroPress.trainers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.utils.html">NeuroPress.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NeuroPress</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">NeuroPress</a></li>
+          <li class="breadcrumb-item"><a href="NeuroPress.html">NeuroPress package</a></li>
+      <li class="breadcrumb-item active">NeuroPress.layers package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/NeuroPress.layers.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neuropress-layers-package">
+<h1>NeuroPress.layers package<a class="headerlink" href="#neuropress-layers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-NeuroPress.layers.base">
+<span id="neuropress-layers-base-module"></span><h2>NeuroPress.layers.base module<a class="headerlink" href="#module-NeuroPress.layers.base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="NeuroPress.layers.base.BaseQuantizedLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">NeuroPress.layers.base.</span></span><span class="sig-name descname"><span class="pre">BaseQuantizedLayer</span></span><a class="reference internal" href="_modules/NeuroPress/layers/base.html#BaseQuantizedLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.base.BaseQuantizedLayer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.base.BaseQuantizedLayer.forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/base.html#BaseQuantizedLayer.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.base.BaseQuantizedLayer.forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.base.BaseQuantizedLayer.freeze_layer">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">freeze_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/base.html#BaseQuantizedLayer.freeze_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.base.BaseQuantizedLayer.freeze_layer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.base.BaseQuantizedLayer.infer_forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">infer_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/base.html#BaseQuantizedLayer.infer_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.base.BaseQuantizedLayer.infer_forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.base.BaseQuantizedLayer.train_forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/base.html#BaseQuantizedLayer.train_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.base.BaseQuantizedLayer.train_forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.base.BaseQuantizedLayer.unfreeze_layer">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unfreeze_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/base.html#BaseQuantizedLayer.unfreeze_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.base.BaseQuantizedLayer.unfreeze_layer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-NeuroPress.layers.bitnet">
+<span id="neuropress-layers-bitnet-module"></span><h2>NeuroPress.layers.bitnet module<a class="headerlink" href="#module-NeuroPress.layers.bitnet" title="Link to this heading"></a></h2>
+<p>Module: bitnet</p>
+<p>This module defines quantized linear layers for neural networks,
+utilizing bit-level quantization techniques to optimize performance
+and memory usage. It includes the <cite>BaseBitLinear</cite> class, which serves
+as a foundation for quantized linear layers, and the <cite>BitLinear</cite> class,
+which implements training and inference behaviors with quantization.</p>
+<dl class="simple">
+<dt>Dependencies:</dt><dd><ul class="simple">
+<li><p>torch</p></li>
+<li><p>torch.nn</p></li>
+<li><p>torch.nn.functional</p></li>
+<li><p>NeuroPress.functions.bitlinear.bitlinear</p></li>
+<li><p>NeuroPress.layers.base.BaseQuantizedLayer</p></li>
+<li><p>NeuroPress.functions.rmsnorm.rmsnorm</p></li>
+<li><p>NeuroPress.utils.pack_ternary</p></li>
+<li><p>NeuroPress.layers.rmsnorm.RMSNorm</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BaseBitLinear">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">NeuroPress.layers.bitnet.</span></span><span class="sig-name descname"><span class="pre">BaseBitLinear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BaseBitLinear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BaseBitLinear" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#NeuroPress.layers.base.BaseQuantizedLayer" title="NeuroPress.layers.base.BaseQuantizedLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseQuantizedLayer</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Linear</span></code></p>
+<p>Base class for quantized linear layers using bit-level quantization.</p>
+<p>This class inherits from <cite>BaseQuantizedLayer</cite> and <cite>nn.Linear</cite>, providing
+foundational quantization functionalities for linear layers in neural networks.
+It includes methods for activation and weight quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_features</strong> (<em>int</em>) – Size of each input sample.</p></li>
+<li><p><strong>out_features</strong> (<em>int</em>) – Size of each output sample.</p></li>
+<li><p><strong>bias</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set to <cite>False</cite>, the layer will not learn an additive bias. Default: <cite>True</cite>.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em><em>, </em><em>optional</em>) – The device on which the layer’s parameters will be allocated.</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em><em>, </em><em>optional</em>) – The desired data type of the layer’s parameters.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BaseBitLinear.activation_quant">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">activation_quant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BaseBitLinear.activation_quant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BaseBitLinear.activation_quant" title="Link to this definition"></a></dt>
+<dd><p>Quantize the activation tensor.</p>
+<p>This method scales the input tensor <cite>x</cite>, rounds it to the nearest integer,
+clamps the values to the range [-128, 127], and optionally casts it to the specified dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – The input tensor to quantize.</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em><em>, </em><em>optional</em>) – The desired data type of the output tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized activation tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BaseBitLinear.weight_quant">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weight_quant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BaseBitLinear.weight_quant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BaseBitLinear.weight_quant" title="Link to this definition"></a></dt>
+<dd><p>Quantize the weight tensor.</p>
+<p>This method scales the input weight tensor <cite>w</cite> based on its mean absolute value,
+rounds it to the nearest integer, clamps the values to the range [-1, 1],
+and returns the quantized weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<em>torch.Tensor</em>) – The weight tensor to quantize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized weight tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BitLinear">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">NeuroPress.layers.bitnet.</span></span><span class="sig-name descname"><span class="pre">BitLinear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BitLinear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BitLinear" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#NeuroPress.layers.bitnet.BaseBitLinear" title="NeuroPress.layers.bitnet.BaseBitLinear"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseBitLinear</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BitLinear.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BitLinear.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BitLinear.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BitLinear.freeze_layer">
+<span class="sig-name descname"><span class="pre">freeze_layer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BitLinear.freeze_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BitLinear.freeze_layer" title="Link to this definition"></a></dt>
+<dd><p>Freeze the layer for inference.</p>
+<p>This method quantizes the weights, packs them into ternary format, and removes
+the floating-point weights to optimize for inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BitLinear.infer_forward">
+<span class="sig-name descname"><span class="pre">infer_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BitLinear.infer_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BitLinear.infer_forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BitLinear.train_forward">
+<span class="sig-name descname"><span class="pre">train_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BitLinear.train_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BitLinear.train_forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.bitnet.BitLinear.unfreeze_layer">
+<span class="sig-name descname"><span class="pre">unfreeze_layer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/bitnet.html#BitLinear.unfreeze_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.bitnet.BitLinear.unfreeze_layer" title="Link to this definition"></a></dt>
+<dd><p>Unfreeze the layer for training.</p>
+<p>This method restores the floating-point weights from the stored data and removes
+the packed ternary weights and scaling factor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-NeuroPress.layers.rmsnorm">
+<span id="neuropress-layers-rmsnorm-module"></span><h2>NeuroPress.layers.rmsnorm module<a class="headerlink" href="#module-NeuroPress.layers.rmsnorm" title="Link to this heading"></a></h2>
+<p>Module: rmsnorm</p>
+<p>This module defines the <cite>RMSNorm</cite> class, a normalization layer based on Root Mean Square (RMS) normalization.
+RMSNorm normalizes the input tensor by its root mean square, scaled by a learnable weight parameter.
+This normalization technique is an alternative to Layer Normalization and is computationally efficient.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="NeuroPress.layers.rmsnorm.RMSNorm">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">NeuroPress.layers.rmsnorm.</span></span><span class="sig-name descname"><span class="pre">RMSNorm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/rmsnorm.html#RMSNorm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.rmsnorm.RMSNorm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Root Mean Square Normalization Layer.</p>
+<p><cite>RMSNorm</cite> normalizes the input tensor based on the root mean square of its elements, scaled by a learnable weight.
+This normalization technique stabilizes the hidden states in neural networks, promoting faster convergence
+and improved performance.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="NeuroPress.layers.rmsnorm.RMSNorm.eps">
+<span class="sig-name descname"><span class="pre">eps</span></span><a class="headerlink" href="#NeuroPress.layers.rmsnorm.RMSNorm.eps" title="Link to this definition"></a></dt>
+<dd><p>A small value added to the denominator for numerical stability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="NeuroPress.layers.rmsnorm.RMSNorm.weight">
+<span class="sig-name descname"><span class="pre">weight</span></span><a class="headerlink" href="#NeuroPress.layers.rmsnorm.RMSNorm.weight" title="Link to this definition"></a></dt>
+<dd><p>Learnable scaling parameter of shape <cite>shape</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.nn.Parameter</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>int</em><em> or </em><em>tuple</em>) – The shape of the weight parameter. Typically matches the last dimension of the input.</p></li>
+<li><p><strong>eps</strong> (<em>float</em><em>, </em><em>optional</em>) – A small value to prevent division by zero. Default is <cite>1e-6</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.layers.rmsnorm.RMSNorm.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/layers/rmsnorm.html#RMSNorm.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.layers.rmsnorm.RMSNorm.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass for RMSNorm.</p>
+<p>Applies Root Mean Square (RMS) normalization to the input tensor <cite>x</cite>, scaling it by the learnable <cite>weight</cite> parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – The input tensor to normalize. Expected shape is <cite>(*, shape)</cite>, where <cite>shape</cite> matches
+the last dimension of <cite>self.weight</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The RMS-normalized tensor, scaled by <cite>self.weight</cite>. The output shape matches the input shape.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-NeuroPress.layers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-NeuroPress.layers" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="NeuroPress.functions.utils.html" class="btn btn-neutral float-left" title="NeuroPress.functions.utils package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="NeuroPress.models.html" class="btn btn-neutral float-right" title="NeuroPress.models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Oliver Grainge.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

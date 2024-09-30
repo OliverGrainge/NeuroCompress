@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroPress.utils package &mdash; NeuroPress 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="NeuroPress.trainers package" href="NeuroPress.trainers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            NeuroPress
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="modules.html">NeuroPress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.functions.html">NeuroPress.functions package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.functions.utils.html">NeuroPress.functions.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.layers.html">NeuroPress.layers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.models.html">NeuroPress.models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.trainers.html">NeuroPress.trainers package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">NeuroPress.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.utils.packing">NeuroPress.utils.packing module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.utils.packing.pack_ternary"><code class="docutils literal notranslate"><span class="pre">pack_ternary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.utils.packing.unpack_ternary"><code class="docutils literal notranslate"><span class="pre">unpack_ternary()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NeuroPress</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">NeuroPress</a></li>
+          <li class="breadcrumb-item"><a href="NeuroPress.html">NeuroPress package</a></li>
+      <li class="breadcrumb-item active">NeuroPress.utils package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/NeuroPress.utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neuropress-utils-package">
+<h1>NeuroPress.utils package<a class="headerlink" href="#neuropress-utils-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-NeuroPress.utils.packing">
+<span id="neuropress-utils-packing-module"></span><h2>NeuroPress.utils.packing module<a class="headerlink" href="#module-NeuroPress.utils.packing" title="Link to this heading"></a></h2>
+<p>Module: packing</p>
+<p>This module provides utility functions for packing and unpacking ternary values
+(-1, 0, 1) into and from integer representations. These functions are essential
+for efficient storage and computation in quantized neural network models, where
+ternary weights can significantly reduce memory usage and accelerate inference.</p>
+<dl class="simple">
+<dt>Functions:</dt><dd><dl class="simple">
+<dt>pack_ternary(x, n_element_in_one_int=4):</dt><dd><p>Packs ternary values into integers.</p>
+</dd>
+<dt>unpack_ternary(x, n_bits=4):</dt><dd><p>Unpacks ternary values from integers.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="NeuroPress.utils.packing.pack_ternary">
+<span class="sig-prename descclassname"><span class="pre">NeuroPress.utils.packing.</span></span><span class="sig-name descname"><span class="pre">pack_ternary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_element_in_one_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/utils/packing.html#pack_ternary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.utils.packing.pack_ternary" title="Link to this definition"></a></dt>
+<dd><p>Pack ternary values into integers.</p>
+<p>This function packs a tensor of ternary values (-1, 0, 1) into a compact integer
+representation. Each integer encodes a fixed number of ternary elements, specified
+by <cite>n_element_in_one_int</cite>. This packing is useful for reducing memory footprint
+and improving computational efficiency in quantized neural network models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – A tensor containing ternary values with shape <cite>(*, K, N)</cite>, where
+<cite>*</cite> denotes any number of leading dimensions, <cite>K</cite> is the number of
+ternary values, and <cite>N</cite> is the number of elements per group to pack.</p></li>
+<li><p><strong>n_element_in_one_int</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of ternary elements to pack into one integer. Must be one of
+<cite>[4, 8, 16, 32]</cite>. Defaults to <cite>4</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor with shape <cite>(*, K, N // n_element_in_one_int)</cite>, where each element
+in the last dimension is an integer representing <cite>n_element_in_one_int</cite>
+packed ternary values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AssertionError</strong> – If the last dimension of <cite>x</cite> is not divisible by <cite>n_element_in_one_int</cite>.
+    If <cite>n_element_in_one_int</cite> is not one of <cite>[4, 8, 16, 32]</cite>.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The ternary values are mapped as follows: <cite>-1</cite> -&gt; <cite>2</cite>, <cite>0</cite> -&gt; <cite>0</cite>, <cite>1</cite> -&gt; <cite>1</cite>.</p></li>
+<li><p>The packing process shifts each ternary value by <cite>2 * position</cite> bits and sums them
+to form the packed integer.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="NeuroPress.utils.packing.unpack_ternary">
+<span class="sig-prename descclassname"><span class="pre">NeuroPress.utils.packing.</span></span><span class="sig-name descname"><span class="pre">unpack_ternary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/utils/packing.html#unpack_ternary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.utils.packing.unpack_ternary" title="Link to this definition"></a></dt>
+<dd><p>Unpack ternary values from integers.</p>
+<p>This function unpacks a tensor of integers into their original ternary values (-1, 0, 1).
+Each integer encodes a fixed number of ternary elements, specified by <cite>n_bits</cite>. This
+unpacking is essential for retrieving the original ternary representation from a
+compact integer format, facilitating tasks such as model inference and analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – A tensor containing packed integers with shape <cite>(*, K // n_bits, N)</cite>, where
+<cite>*</cite> denotes any number of leading dimensions, <cite>K</cite> is the total number of
+ternary values, and <cite>N</cite> is the number of elements per group.</p></li>
+<li><p><strong>n_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of ternary values that each integer in <cite>x</cite> represents. Must be one of
+<cite>[4, 8, 16, 32]</cite>. Defaults to <cite>4</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor with shape <cite>(*, K, N)</cite>, where each element is a ternary value (-1, 0, 1)
+unpacked from the integers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AssertionError</strong> – If <cite>n_bits</cite> is not one of <cite>[4, 8, 16, 32]</cite>.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The unpacking process reverses the packing by extracting each pair of bits,
+mapping them back to ternary values: <cite>2</cite> -&gt; <cite>-1</cite>, <cite>1</cite> -&gt; <cite>1</cite>, <cite>0</cite> -&gt; <cite>0</cite>.</p></li>
+<li><p>The function assumes that the packed integers were created using the <cite>pack_ternary</cite>
+function with the same <cite>n_bits</cite> parameter.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="module-NeuroPress.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-NeuroPress.utils" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="NeuroPress.trainers.html" class="btn btn-neutral float-left" title="NeuroPress.trainers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Oliver Grainge.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

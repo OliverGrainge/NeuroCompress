@@ -1,13 +1,12 @@
 import torch
-from NeuroPress.utils import unpack_ternary
 
+from NeuroPress.utils import unpack_ternary
 
 if torch.cuda.is_available():
     import triton
     import triton.language as tl
 
     from NeuroPress.functions.utils import autotune, kernel_config_pruner
-
 
     @autotune(
         configs=[
@@ -169,7 +168,6 @@ if torch.cuda.is_available():
         c_mask = (offs_am[:, None] < M) & (offs_bn[None, :] < N)
         tl.store(c_ptrs, accumulator, mask=c_mask)
 
-
     def _gpu_bitlinear(a, b, int_per_2_bits=4, activation="", out_dtype=torch.float16):
         #    a: int8 tensor (..., K)
         #    b: int8 packed tensor (K // int_per_2_bit, N)
@@ -226,9 +224,21 @@ def _cpu_bitlinear(a, b, int_per_2_bits=4, activation="", out_dtype=torch.float1
 def bitlinear(a, b, int_per_2_bits=4, activation="", out_dtype=torch.float16):
     if a.device.type == "cuda":
         assert b.device.type == "cuda"
-        return _gpu_bitlinear(a, b, int_per_2_bits=int_per_2_bits, activation=activation, out_dtype=out_dtype)
+        return _gpu_bitlinear(
+            a,
+            b,
+            int_per_2_bits=int_per_2_bits,
+            activation=activation,
+            out_dtype=out_dtype,
+        )
     elif a.device.type == "cpu":
         assert b.device.type == "cpu"
-        return _cpu_bitlinear(a, b, int_per_2_bits=int_per_2_bits, activation=activation, out_dtype=out_dtype)
-    else: 
+        return _cpu_bitlinear(
+            a,
+            b,
+            int_per_2_bits=int_per_2_bits,
+            activation=activation,
+            out_dtype=out_dtype,
+        )
+    else:
         raise Exception("only cpu and cuda device types are supported")

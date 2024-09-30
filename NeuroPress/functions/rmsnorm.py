@@ -1,14 +1,12 @@
 # Kindly borrowed from UnSloth's implementation
 import torch
 
-
 if torch.cuda.is_available():
     import triton
     import triton.language as tl
 
     MAX_FUSED_SIZE = 65536
     next_power_of_2 = triton.next_power_of_2
-
 
     def calculate_settings(n):
         BLOCK_SIZE = next_power_of_2(n)
@@ -26,9 +24,7 @@ if torch.cuda.is_available():
             num_warps = 8
         return BLOCK_SIZE, num_warps
 
-
     pass
-
 
     @triton.jit
     def _rms_layernorm_forward(
@@ -68,9 +64,7 @@ if torch.cuda.is_available():
         output = normed * W_row
         tl.store(Y + col_offsets, output, mask=mask)
 
-
     pass
-
 
     @triton.heuristics(
         {
@@ -124,9 +118,7 @@ if torch.cuda.is_available():
         output = inv_var / n_cols * (n_cols * dY_W - normed * rowsum_dY_normed)
         tl.store(dY + col_offsets, output, mask=mask)
 
-
     pass
-
 
     @triton.jit
     def _gemma_rms_layernorm_forward(
@@ -157,16 +149,16 @@ if torch.cuda.is_available():
         W_row = tl.load(W + col_offsets, mask=mask, other=0).to(tl.float32)
 
         row_var = tl.sum(X_row * X_row, axis=0) / n_cols
-        inv_var = 1.0 / tl.sqrt(row_var + eps)  # Must be 1/sqrt to match Deepmind's impl
+        inv_var = 1.0 / tl.sqrt(
+            row_var + eps
+        )  # Must be 1/sqrt to match Deepmind's impl
         tl.store(r, inv_var)
         normed = X_row * inv_var
         output = normed * (W_row + 1.0)
 
         tl.store(Y + col_offsets, output, mask=mask)
 
-
     pass
-
 
     class Fast_RMS_Layernorm(torch.autograd.Function):
         @staticmethod
@@ -235,13 +227,12 @@ if torch.cuda.is_available():
 
         pass
 
-
     pass
-
 
     def _gpu_rmsnorm(weight, X, eps, gemma=False):
         out = Fast_RMS_Layernorm.apply(X, weight, eps, gemma)
         return out
+
     pass
 
 
@@ -275,6 +266,7 @@ def _cpu_rmsnorm(weight, X, eps, gemma=False):
 
     return normed
 
+
 def rmsnorm(weight, X, eps, gemma=False):
     if X.device.type == "cuda":
         assert weight.device.type == "cuda"
@@ -282,5 +274,5 @@ def rmsnorm(weight, X, eps, gemma=False):
     elif X.device.type == "cpu":
         assert weight.device.type == "cpu"
         return _cpu_rmsnorm(weight, X, eps, gemma=gemma)
-    else: 
+    else:
         raise Exception("Only CPU or CUDA supported")

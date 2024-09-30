@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroPress.models package &mdash; NeuroPress 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="NeuroPress.trainers package" href="NeuroPress.trainers.html" />
+    <link rel="prev" title="NeuroPress.layers package" href="NeuroPress.layers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            NeuroPress
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="modules.html">NeuroPress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.functions.html">NeuroPress.functions package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.functions.utils.html">NeuroPress.functions.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.layers.html">NeuroPress.layers package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">NeuroPress.models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.models.base">NeuroPress.models.base module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.models.base.Qmodel"><code class="docutils literal notranslate"><span class="pre">Qmodel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.models.base.Qmodel.None"><code class="docutils literal notranslate"><span class="pre">Qmodel.None</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.models.base.Qmodel.freeze"><code class="docutils literal notranslate"><span class="pre">Qmodel.freeze()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.models.base.Qmodel.unfreeze"><code class="docutils literal notranslate"><span class="pre">Qmodel.unfreeze()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.models.mlp">NeuroPress.models.mlp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#NeuroPress.models.mlp.MLP"><code class="docutils literal notranslate"><span class="pre">MLP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.models.mlp.MLP.layers"><code class="docutils literal notranslate"><span class="pre">MLP.layers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#NeuroPress.models.mlp.MLP.forward"><code class="docutils literal notranslate"><span class="pre">MLP.forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-NeuroPress.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.trainers.html">NeuroPress.trainers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="NeuroPress.utils.html">NeuroPress.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NeuroPress</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">NeuroPress</a></li>
+          <li class="breadcrumb-item"><a href="NeuroPress.html">NeuroPress package</a></li>
+      <li class="breadcrumb-item active">NeuroPress.models package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/NeuroPress.models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neuropress-models-package">
+<h1>NeuroPress.models package<a class="headerlink" href="#neuropress-models-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-NeuroPress.models.base">
+<span id="neuropress-models-base-module"></span><h2>NeuroPress.models.base module<a class="headerlink" href="#module-NeuroPress.models.base" title="Link to this heading"></a></h2>
+<p>Module: base</p>
+<p>This module defines the <cite>Qmodel</cite> class, a base class for quantized neural network models.
+<cite>Qmodel</cite> extends PyTorch’s <cite>nn.Module</cite> and provides functionality to freeze and unfreeze
+quantized layers within the model. Freezing layers is essential for inference, where
+quantized weights are utilized for efficient computation, while unfreezing allows for
+training or fine-tuning the model with floating-point weights.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="NeuroPress.models.base.Qmodel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">NeuroPress.models.base.</span></span><span class="sig-name descname"><span class="pre">Qmodel</span></span><a class="reference internal" href="_modules/NeuroPress/models/base.html#Qmodel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.models.base.Qmodel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Base Class for Quantized Neural Network Models.</p>
+<p>The <cite>Qmodel</cite> class serves as a foundational class for creating quantized neural network
+models. It extends PyTorch’s <cite>nn.Module</cite> and provides methods to freeze and unfreeze
+quantized layers within the model. Freezing a layer typically involves converting
+its parameters to a quantized format suitable for efficient inference, while unfreezing
+reverts them back to a trainable floating-point format.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="NeuroPress.models.base.Qmodel.None">
+<span class="sig-name descname"><span class="pre">None</span></span><a class="headerlink" href="#NeuroPress.models.base.Qmodel.None" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>None</strong></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.models.base.Qmodel.freeze">
+<span class="sig-name descname"><span class="pre">freeze</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/models/base.html#Qmodel.freeze"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.models.base.Qmodel.freeze" title="Link to this definition"></a></dt>
+<dd><p>Freeze Quantized Layers in the Model.</p>
+<p>Iterates through all submodules of the model and invokes the <cite>freeze_layer</cite>
+method on modules that possess this attribute. Freezing a layer typically
+converts its parameters to a quantized format suitable for efficient inference.</p>
+<p>This method is essential for preparing the model for deployment, ensuring that
+all quantized layers are in their optimized state for inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>None</strong></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AttributeError</strong> – If a module intended to be frozen does not have a <cite>freeze_layer</cite> method.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.models.base.Qmodel.unfreeze">
+<span class="sig-name descname"><span class="pre">unfreeze</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/models/base.html#Qmodel.unfreeze"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.models.base.Qmodel.unfreeze" title="Link to this definition"></a></dt>
+<dd><p>Unfreeze Quantized Layers in the Model.</p>
+<p>Iterates through all submodules of the model and invokes the <cite>unfreeze_layer</cite>
+method on modules that possess this attribute. Unfreezing a layer typically
+reverts its parameters back to a floating-point format, allowing for training
+or fine-tuning.</p>
+<p>This method is useful when you need to update the model’s weights or perform
+further training after deployment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>None</strong></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AttributeError</strong> – If a module intended to be unfrozen does not have an <cite>unfreeze_layer</cite> method.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-NeuroPress.models.mlp">
+<span id="neuropress-models-mlp-module"></span><h2>NeuroPress.models.mlp module<a class="headerlink" href="#module-NeuroPress.models.mlp" title="Link to this heading"></a></h2>
+<p>Module: mlp</p>
+<p>This module defines the MLP class, a Multi-Layer Perceptron (MLP) model for classification tasks.
+The MLP class inherits from Qmodel and allows for flexible configuration of the network’s architecture
+by specifying the type of layers, input size, hidden layer size, number of classes, and number of layers.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="NeuroPress.models.mlp.MLP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">NeuroPress.models.mlp.</span></span><span class="sig-name descname"><span class="pre">MLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/models/mlp.html#MLP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.models.mlp.MLP" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#NeuroPress.models.base.Qmodel" title="NeuroPress.models.base.Qmodel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Qmodel</span></code></a></p>
+<p>Multi-Layer Perceptron (MLP) Model for Classification.</p>
+<p>The MLP class implements a fully connected neural network with a configurable number of layers.
+It is designed for classification tasks and allows the use of different layer types, such as
+standard linear layers or quantized linear layers, by specifying the <code class="docutils literal notranslate"><span class="pre">layer_type</span></code> during initialization.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="NeuroPress.models.mlp.MLP.layers">
+<span class="sig-name descname"><span class="pre">layers</span></span><a class="headerlink" href="#NeuroPress.models.mlp.MLP.layers" title="Link to this definition"></a></dt>
+<dd><p>A list of layers comprising the MLP model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.ModuleList</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer_type</strong> (<em>class</em>) – The class of the layer to be used (e.g., <code class="docutils literal notranslate"><span class="pre">nn.Linear</span></code>, <code class="docutils literal notranslate"><span class="pre">BitLinear</span></code>).</p></li>
+<li><p><strong>input_size</strong> (<em>int</em>) – The size of each input sample.</p></li>
+<li><p><strong>hidden_size</strong> (<em>int</em>) – The size of each hidden layer.</p></li>
+<li><p><strong>num_classes</strong> (<em>int</em>) – The number of output classes for classification.</p></li>
+<li><p><strong>num_layers</strong> (<em>int</em>) – The total number of layers in the MLP (including input and output layers).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="NeuroPress.models.mlp.MLP.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/NeuroPress/models/mlp.html#MLP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#NeuroPress.models.mlp.MLP.forward" title="Link to this definition"></a></dt>
+<dd><p>Perform a forward pass through the MLP.</p>
+<p>Passes the input tensor <code class="docutils literal notranslate"><span class="pre">x</span></code> through each layer of the MLP, applying the ReLU activation
+function after each hidden layer. The output layer does not use an activation function,
+as it is assumed to be used with a classification loss function like CrossEntropyLoss,
+which internally applies softmax.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – The input tensor of shape <code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">input_size)</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The output logits tensor of shape <code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">num_classes)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-NeuroPress.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-NeuroPress.models" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="NeuroPress.layers.html" class="btn btn-neutral float-left" title="NeuroPress.layers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="NeuroPress.trainers.html" class="btn btn-neutral float-right" title="NeuroPress.trainers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Oliver Grainge.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

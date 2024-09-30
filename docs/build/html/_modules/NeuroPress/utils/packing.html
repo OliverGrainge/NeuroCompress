@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroPress.utils.packing &mdash; NeuroPress 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            NeuroPress
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">NeuroPress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.functions.html">NeuroPress.functions package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.functions.utils.html">NeuroPress.functions.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.layers.html">NeuroPress.layers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.models.html">NeuroPress.models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.trainers.html">NeuroPress.trainers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.utils.html">NeuroPress.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">NeuroPress</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">NeuroPress.utils.packing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for NeuroPress.utils.packing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module: packing</span>
+
+<span class="sd">This module provides utility functions for packing and unpacking ternary values</span>
+<span class="sd">(-1, 0, 1) into and from integer representations. These functions are essential</span>
+<span class="sd">for efficient storage and computation in quantized neural network models, where</span>
+<span class="sd">ternary weights can significantly reduce memory usage and accelerate inference.</span>
+
+<span class="sd">Functions:</span>
+<span class="sd">    pack_ternary(x, n_element_in_one_int=4):</span>
+<span class="sd">        Packs ternary values into integers.</span>
+<span class="sd">    </span>
+<span class="sd">    unpack_ternary(x, n_bits=4):</span>
+<span class="sd">        Unpacks ternary values from integers.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+
+<div class="viewcode-block" id="pack_ternary">
+<a class="viewcode-back" href="../../../NeuroPress.utils.html#NeuroPress.utils.packing.pack_ternary">[docs]</a>
+<span class="k">def</span> <span class="nf">pack_ternary</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_element_in_one_int</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pack ternary values into integers.</span>
+
+<span class="sd">    This function packs a tensor of ternary values (-1, 0, 1) into a compact integer</span>
+<span class="sd">    representation. Each integer encodes a fixed number of ternary elements, specified</span>
+<span class="sd">    by `n_element_in_one_int`. This packing is useful for reducing memory footprint</span>
+<span class="sd">    and improving computational efficiency in quantized neural network models.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (torch.Tensor):</span>
+<span class="sd">            A tensor containing ternary values with shape `(*, K, N)`, where</span>
+<span class="sd">            `*` denotes any number of leading dimensions, `K` is the number of</span>
+<span class="sd">            ternary values, and `N` is the number of elements per group to pack.</span>
+<span class="sd">        n_element_in_one_int (int, optional):</span>
+<span class="sd">            The number of ternary elements to pack into one integer. Must be one of</span>
+<span class="sd">            `[4, 8, 16, 32]`. Defaults to `4`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor:</span>
+<span class="sd">            A tensor with shape `(*, K, N // n_element_in_one_int)`, where each element</span>
+<span class="sd">            in the last dimension is an integer representing `n_element_in_one_int`</span>
+<span class="sd">            packed ternary values.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError:</span>
+<span class="sd">            If the last dimension of `x` is not divisible by `n_element_in_one_int`.</span>
+<span class="sd">            If `n_element_in_one_int` is not one of `[4, 8, 16, 32]`.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - The ternary values are mapped as follows: `-1` -&gt; `2`, `0` -&gt; `0`, `1` -&gt; `1`.</span>
+<span class="sd">        - The packing process shifts each ternary value by `2 * position` bits and sums them</span>
+<span class="sd">          to form the packed integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">n_element_in_one_int</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;K must be divisible by n_bits&quot;</span>
+    <span class="k">assert</span> <span class="n">n_element_in_one_int</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">,</span>
+        <span class="mi">16</span><span class="p">,</span>
+        <span class="mi">32</span><span class="p">,</span>
+    <span class="p">],</span> <span class="s2">&quot;n_element_in_one_int must be 4, 8, 16, 32&quot;</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
+    <span class="n">x_mapped</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="n">x_mapped</span><span class="p">[</span><span class="n">x</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_element_in_one_int</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x_mapped</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="n">n_element_in_one_int</span><span class="p">,</span> <span class="n">n_element_in_one_int</span>
+    <span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">,</span> <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="k">if</span> <span class="n">n_element_in_one_int</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">int8</span>
+    <span class="k">elif</span> <span class="n">n_element_in_one_int</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">int16</span>
+    <span class="k">elif</span> <span class="n">n_element_in_one_int</span> <span class="o">==</span> <span class="mi">16</span><span class="p">:</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">int32</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">int64</span>
+
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="unpack_ternary">
+<a class="viewcode-back" href="../../../NeuroPress.utils.html#NeuroPress.utils.packing.unpack_ternary">[docs]</a>
+<span class="k">def</span> <span class="nf">unpack_ternary</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unpack ternary values from integers.</span>
+
+<span class="sd">    This function unpacks a tensor of integers into their original ternary values (-1, 0, 1).</span>
+<span class="sd">    Each integer encodes a fixed number of ternary elements, specified by `n_bits`. This</span>
+<span class="sd">    unpacking is essential for retrieving the original ternary representation from a</span>
+<span class="sd">    compact integer format, facilitating tasks such as model inference and analysis.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (torch.Tensor):</span>
+<span class="sd">            A tensor containing packed integers with shape `(*, K // n_bits, N)`, where</span>
+<span class="sd">            `*` denotes any number of leading dimensions, `K` is the total number of</span>
+<span class="sd">            ternary values, and `N` is the number of elements per group.</span>
+<span class="sd">        n_bits (int, optional):</span>
+<span class="sd">            The number of ternary values that each integer in `x` represents. Must be one of</span>
+<span class="sd">            `[4, 8, 16, 32]`. Defaults to `4`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor:</span>
+<span class="sd">            A tensor with shape `(*, K, N)`, where each element is a ternary value (-1, 0, 1)</span>
+<span class="sd">            unpacked from the integers.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError:</span>
+<span class="sd">            If `n_bits` is not one of `[4, 8, 16, 32]`.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - The unpacking process reverses the packing by extracting each pair of bits,</span>
+<span class="sd">          mapping them back to ternary values: `2` -&gt; `-1`, `1` -&gt; `1`, `0` -&gt; `0`.</span>
+<span class="sd">        - The function assumes that the packed integers were created using the `pack_ternary`</span>
+<span class="sd">          function with the same `n_bits` parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Create a mask for the shifting</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_bits</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Use broadcasting for the mask</span>
+    <span class="n">x_expanded</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">x_expanded</span> <span class="o">=</span> <span class="n">x_expanded</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span>
+
+    <span class="c1"># Apply mask and shift values</span>
+    <span class="n">unpacked</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_expanded</span> <span class="o">&amp;</span> <span class="n">masks</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_bits</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Mappa i valori di nuovo a -1, 0, 1</span>
+    <span class="n">unpacked</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">unpacked</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">unpacked</span><span class="p">)</span>
+
+    <span class="c1"># Riorganizza le dimensioni per ottenere il formato desiderato (*, K, N)</span>
+    <span class="k">return</span> <span class="n">unpacked</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Oliver Grainge.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

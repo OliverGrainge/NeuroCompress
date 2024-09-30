@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroPress.models.base &mdash; NeuroPress 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            NeuroPress
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">NeuroPress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.functions.html">NeuroPress.functions package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.functions.utils.html">NeuroPress.functions.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.layers.html">NeuroPress.layers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.models.html">NeuroPress.models package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.trainers.html">NeuroPress.trainers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../NeuroPress.utils.html">NeuroPress.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">NeuroPress</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">NeuroPress.models.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for NeuroPress.models.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module: base</span>
+
+<span class="sd">This module defines the `Qmodel` class, a base class for quantized neural network models.</span>
+<span class="sd">`Qmodel` extends PyTorch&#39;s `nn.Module` and provides functionality to freeze and unfreeze</span>
+<span class="sd">quantized layers within the model. Freezing layers is essential for inference, where</span>
+<span class="sd">quantized weights are utilized for efficient computation, while unfreezing allows for</span>
+<span class="sd">training or fine-tuning the model with floating-point weights.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+
+<div class="viewcode-block" id="Qmodel">
+<a class="viewcode-back" href="../../../NeuroPress.models.html#NeuroPress.models.base.Qmodel">[docs]</a>
+<span class="k">class</span> <span class="nc">Qmodel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base Class for Quantized Neural Network Models.</span>
+
+<span class="sd">    The `Qmodel` class serves as a foundational class for creating quantized neural network</span>
+<span class="sd">    models. It extends PyTorch&#39;s `nn.Module` and provides methods to freeze and unfreeze</span>
+<span class="sd">    quantized layers within the model. Freezing a layer typically involves converting</span>
+<span class="sd">    its parameters to a quantized format suitable for efficient inference, while unfreezing</span>
+<span class="sd">    reverts them back to a trainable floating-point format.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        None</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Qmodel.</span>
+
+<span class="sd">        Constructs the base `Qmodel` by initializing the parent `nn.Module`.</span>
+<span class="sd">        This base class does not define any layers itself but provides methods</span>
+<span class="sd">        to manage quantized layers within derived models.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Qmodel.freeze">
+<a class="viewcode-back" href="../../../NeuroPress.models.html#NeuroPress.models.base.Qmodel.freeze">[docs]</a>
+    <span class="k">def</span> <span class="nf">freeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Freeze Quantized Layers in the Model.</span>
+
+<span class="sd">        Iterates through all submodules of the model and invokes the `freeze_layer`</span>
+<span class="sd">        method on modules that possess this attribute. Freezing a layer typically</span>
+<span class="sd">        converts its parameters to a quantized format suitable for efficient inference.</span>
+
+<span class="sd">        This method is essential for preparing the model for deployment, ensuring that</span>
+<span class="sd">        all quantized layers are in their optimized state for inference.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            None</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AttributeError: If a module intended to be frozen does not have a `freeze_layer` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;freeze_layer&quot;</span><span class="p">):</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">freeze_layer</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Qmodel.unfreeze">
+<a class="viewcode-back" href="../../../NeuroPress.models.html#NeuroPress.models.base.Qmodel.unfreeze">[docs]</a>
+    <span class="k">def</span> <span class="nf">unfreeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unfreeze Quantized Layers in the Model.</span>
+
+<span class="sd">        Iterates through all submodules of the model and invokes the `unfreeze_layer`</span>
+<span class="sd">        method on modules that possess this attribute. Unfreezing a layer typically</span>
+<span class="sd">        reverts its parameters back to a floating-point format, allowing for training</span>
+<span class="sd">        or fine-tuning.</span>
+
+<span class="sd">        This method is useful when you need to update the model&#39;s weights or perform</span>
+<span class="sd">        further training after deployment.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            None</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AttributeError: If a module intended to be unfrozen does not have an `unfreeze_layer` method.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;unfreeze_layer&quot;</span><span class="p">):</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">unfreeze_layer</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Oliver Grainge.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
