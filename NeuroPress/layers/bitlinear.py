@@ -1,5 +1,5 @@
 """
-Module: bitnet
+Module: bitlinear
 
 This module defines quantized linear layers for neural networks,
 utilizing bit-level quantization techniques to optimize performance
@@ -134,7 +134,7 @@ class BitLinear(BaseBitLinear):
         scale_x = 127.0 / x.abs().max(dim=-1, keepdim=True).values.clamp_(min=1e-5)
         x_quant = (x * scale_x).round().clamp_(-128, 127).type(torch.int8)
         y = bitlinear(x_quant, self.packed_weights)
-        y = y / scale_x / self.weight_scale
+        y = y / scale_x / self.scale
         return y
 
     def forward(self, x):
@@ -156,9 +156,9 @@ class BitLinear(BaseBitLinear):
         self.freeze_state = True
         w = self.weight
         device = self.weight.device
-        self.weight_scale = 1.0 / w.abs().mean().clamp_(min=1e-5)
+        self.scale = 1.0 / w.abs().mean().clamp_(min=1e-5)
         q_weights = self.weight_quant(w)
-        q_weights = torch.clamp((q_weights * self.weight_scale).round(), -1, 1).type(
+        q_weights = torch.clamp((q_weights * self.scale).round(), -1, 1).type(
             torch.int8
         )
         self.packed_weights = nn.Parameter(
@@ -179,7 +179,7 @@ class BitLinear(BaseBitLinear):
         """
         self.freeze_state = False
         self.packed_weights = None
-        self.weight_scale = None
+        self.scale = None
         self.weight = nn.Parameter(self.float_weight)
 
     @staticmethod
@@ -261,7 +261,7 @@ class BitLinear(BaseBitLinear):
 
             self.freeze_state = True
             self.packed_weights = state_dict[key_packed_weights]
-            self.weight_scale = state_dict[key_weight_scale]
+            self.scale = state_dict[key_weight_scale]
 
             missing_keys.remove(key_weight)
             unexpected_keys.remove(key_packed_weights)
