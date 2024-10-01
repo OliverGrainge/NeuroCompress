@@ -1,4 +1,4 @@
-from .bitnet import BitLinear
-from .rmsnorm import RMSNorm
+from .BitLinear import BitLinear
+from .RMSNorm import RMSNorm
 
 LINEAR_LAYERS = (BitLinear,)
