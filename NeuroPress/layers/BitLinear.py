@@ -126,6 +126,8 @@ class BitLinear(BaseBitLinear):
         x_quant = x_norm + (self.activation_quant(x_norm) - x_norm).detach()
         w_quant = w + (self.weight_quant(w) - w).detach()
         y = F.linear(x_quant, w_quant)
+        if self.bias is not None:
+            y += self.bias
         return y
 
     def infer_forward(self, x):
@@ -134,6 +136,8 @@ class BitLinear(BaseBitLinear):
         x_quant = (x * scale_x).round().clamp_(-128, 127).type(torch.int8)
         y = bitlinear(x_quant, self.packed_weights)
         y = y / scale_x / self.weight_scale
+        if self.bias is not None:
+            y += self.bias
         return y
 
     def forward(self, x):

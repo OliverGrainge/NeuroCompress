@@ -76,6 +76,8 @@ class LRBitLinear(nn.Linear):
         x_quant = x_norm + (self.activation_quant(x_norm) - x_norm).detach()
         w_quant = w + (self.weight_quant(w) - w).detach()
         y = F.linear(x_quant, w_quant)
+        if self.bias is not None:
+            y += self.bias
         return y
 
     def infer_forward(self, x):
@@ -84,6 +86,8 @@ class LRBitLinear(nn.Linear):
         x_quant = (x * scale_x).round().clamp_(-128, 127).type(torch.int8)
         y = bitlinear(x_quant, self.packed_weights)
         y = y / scale_x / self.scale
+        if self.bias is not None:
+            y += self.bias
         return y
 
     def forward(self, x):
@@ -91,19 +95,19 @@ class LRBitLinear(nn.Linear):
             return self.infer_forward(x)
         else:
             return self.train_forward(x)
-
+        
+    @torch.no_grad()
     def weight_decay_layer(self, lr, weight_decay_scale):
         q_weight = (self.weight * self.scale).round().clamp_(-1, 1) / self.scale
         squared_res = (self.weight - q_weight) ** 2
         res = (self.weight - q_weight)
         decay_factor = res * 0.1 + 0.9 * (res.sign() * squared_res * 0.9) 
-        self.weight = self.weight - lr * weight_decay_scale * decay_factor  # Apply decay directly to the weight
-        return self.weight
+        self.weight.data = self.weight.data - lr * weight_decay_scale * decay_factor  # Apply decay directly to the weight
 
     def __repr__(
         self,
     ):
-        return "LRBitLinear1"
+        return "LRBitLinear"
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         super()._save_to_state_dict(destination, prefix, keep_vars)

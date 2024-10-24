@@ -24,7 +24,7 @@ class PLRBitLinear(nn.Linear):
         self.freeze_state = False
         self.register_buffer("packed_weights", None)
         self.scale = nn.Parameter(1 / self.weight.data.abs().mean())
-        self.q_lambda = 1.0
+        self.q_lambda = torch.tensor(1.0)
 
     @staticmethod
     def activation_quant(x, dtype=None):
@@ -81,10 +81,12 @@ class PLRBitLinear(nn.Linear):
         w = self.weight
         x_norm = self.rmsnorm(x)
         x_quant = (
-            x_norm + self.q_lambda * (self.activation_quant(x_norm) - x_norm).detach()
+            x_norm + self.q_lambda.to(self.weight.device) * (self.activation_quant(x_norm) - x_norm).detach()
         )
-        w_quant = w + self.q_lambda * (self.weight_quant(w) - w).detach()
+        w_quant = w + self.q_lambda.to(self.weight.device) * (self.weight_quant(w) - w).detach()
         y = F.linear(x_quant, w_quant)
+        if self.bias is not None:
+            y += self.bias
         return y
 
     def infer_forward(self, x):
@@ -93,6 +95,8 @@ class PLRBitLinear(nn.Linear):
         x_quant = (x * scale_x).round().clamp_(-128, 127).type(torch.int8)
         y = bitlinear(x_quant, self.packed_weights)
         y = y / scale_x / self.scale
+        if self.bias is not None:
+            y += self.bias
         return y
 
     def forward(self, x):
@@ -100,19 +104,20 @@ class PLRBitLinear(nn.Linear):
             return self.infer_forward(x)
         else:
             return self.train_forward(x)
+            
 
     def __repr__(
         self,
     ):
-        return "PLRBitLinear1"
+        return "PLRBitLinear"
 
+    @torch.no_grad()
     def weight_decay_layer(self, lr, weight_decay_scale):
         q_weight = (self.weight * self.scale).round().clamp_(-1, 1) / self.scale
         squared_res = (self.weight - q_weight) ** 2
         res = (self.weight - q_weight)
         decay_factor = res * 0.1 + 0.9 * (res.sign() * squared_res * 0.9) 
-        self.weight = self.weight - lr * weight_decay_scale * decay_factor  # Apply decay directly to the weight
-        return self.weight
+        self.weight.data = self.weight.data - lr * weight_decay_scale * decay_factor  # Apply decay directly to the weight
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         super()._save_to_state_dict(destination, prefix, keep_vars)
@@ -165,5 +170,6 @@ class PLRBitLinear(nn.Linear):
             and key_weight_scale not in state_dict.keys()
         ):
             self.freeze_state = False
+
 
 
