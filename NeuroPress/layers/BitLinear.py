@@ -1,5 +1,5 @@
 """
-Module: bitlinear
+Module: bitnet
 
 This module defines quantized linear layers for neural networks,
 utilizing bit-level quantization techniques to optimize performance
@@ -21,11 +21,10 @@ Dependencies:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from NeuroPress.functions.bitlinear import bitlinear
 from NeuroPress.functions.rmsnorm import rmsnorm
 from NeuroPress.layers.base import BaseQuantizedLayer
-from NeuroPress.layers.rmsnorm import RMSNorm
+from NeuroPress.layers.RMSNorm import RMSNorm
 from NeuroPress.utils import pack_ternary
 
 
@@ -134,7 +133,7 @@ class BitLinear(BaseBitLinear):
         scale_x = 127.0 / x.abs().max(dim=-1, keepdim=True).values.clamp_(min=1e-5)
         x_quant = (x * scale_x).round().clamp_(-128, 127).type(torch.int8)
         y = bitlinear(x_quant, self.packed_weights)
-        y = y / scale_x / self.scale
+        y = y / scale_x / self.weight_scale
         return y
 
     def forward(self, x):
@@ -143,8 +142,11 @@ class BitLinear(BaseBitLinear):
         else:
             return self.train_forward(x)
 
+    def weight_decay_layer(self, lr, weight_decay_scale):
+        self.weight.data = self.weight.data - self.weight.data * lr * weight_decay_scale
+
     def freeze_layer(self):
-        """
+        """ 
         Freeze the layer for inference.
 
         This method quantizes the weights, packs them into ternary format, and removes
@@ -156,9 +158,9 @@ class BitLinear(BaseBitLinear):
         self.freeze_state = True
         w = self.weight
         device = self.weight.device
-        self.scale = 1.0 / w.abs().mean().clamp_(min=1e-5)
+        self.weight_scale = 1.0 / w.abs().mean().clamp_(min=1e-5)
         q_weights = self.weight_quant(w)
-        q_weights = torch.clamp((q_weights * self.scale).round(), -1, 1).type(
+        q_weights = torch.clamp((q_weights * self.weight_scale).round(), -1, 1).type(
             torch.int8
         )
         self.packed_weights = nn.Parameter(
@@ -179,10 +181,11 @@ class BitLinear(BaseBitLinear):
         """
         self.freeze_state = False
         self.packed_weights = None
-        self.scale = None
+        self.weight_scale = None
         self.weight = nn.Parameter(self.float_weight)
 
-    def __repr__(self,):
+    @staticmethod
+    def __repr__():
         """
         Return the string representation of the BitLinear layer.
 
@@ -260,7 +263,7 @@ class BitLinear(BaseBitLinear):
 
             self.freeze_state = True
             self.packed_weights = state_dict[key_packed_weights]
-            self.scale = state_dict[key_weight_scale]
+            self.weight_scale = state_dict[key_weight_scale]
 
             missing_keys.remove(key_weight)
             unexpected_keys.remove(key_packed_weights)

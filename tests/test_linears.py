@@ -166,7 +166,7 @@ def test_compute_reg_cpu(layer_class):
         pytest.skip("Layer is not regularized")
     layer = layer_class(128, 128, bias=True, device="cpu", dtype=None).to("cpu")
     loss = layer.compute_reg_layer()
-    assert loss >= 0 
+    assert loss >= 0
 
 
 @pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
@@ -177,7 +177,7 @@ def test_compute_reg_gpu(layer_class):
         pytest.skip("CUDA is not available, skipping GPU test.")
     layer = layer_class(128, 128, bias=True, device="cuda", dtype=None).to("cuda")
     loss = layer.compute_reg_layer()
-    assert loss >= 0 
+    assert loss >= 0
 
 
 @pytest.mark.parametrize("layer_class", LINEAR_LAYERS)
@@ -195,4 +195,3 @@ def test_compute_reg_dtype(layer_class):
 def test_name_object(layer_class):
     layer = layer_class(128, 128, bias=True, device="cpu", dtype=None).to("cpu")
     assert isinstance(layer.__repr__(), str)
-

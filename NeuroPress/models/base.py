@@ -88,35 +88,29 @@ class Qmodel(nn.Module):
             if hasattr(module, "unfreeze_layer"):
                 module.unfreeze_layer()
 
-
-    def compute_reg(self): 
+    def decay_weight(self, lr, weight_decay_scale):
         """
         Computes the total regularization loss for all applicable layers in the model.
 
-        This method iterates through all the submodules of the model and accumulates the 
-        regularization loss from layers that implement the `compute_reg_layer` method. 
-        The `compute_reg_layer` method typically computes a regularization term based 
+        This method iterates through all the submodules of the model and accumulates the
+        regularization loss from layers that implement the `compute_reg_layer` method.
+        The `compute_reg_layer` method typically computes a regularization term based
         on the quantization or weight properties of the layer.
 
-        Regularization helps in preventing overfitting and encourages model weights to 
-        adhere to certain constraints, such as being close to their quantized versions 
+        Regularization helps in preventing overfitting and encourages model weights to
+        adhere to certain constraints, such as being close to their quantized versions
         in quantized models.
 
         Returns:
             torch.Tensor: The total regularization loss accumulated from all relevant layers.
-        
+
         Note:
-            - Only submodules with a `compute_reg_layer` method will contribute to the 
+            - Only submodules with a `compute_reg_layer` method will contribute to the
             regularization loss.
-            - The method assumes that each layer's `compute_reg_layer` returns a scalar 
+            - The method assumes that each layer's `compute_reg_layer` returns a scalar
             tensor representing the loss for that layer.
 
         """
-        reg_loss = torch.tensor([0.0]).to(next(self.parameters()).device).float()
         for module in self.modules():
-            if hasattr(module, "compute_reg_layer"):
-                reg_loss += module.compute_reg_layer()
-        return reg_loss
-    
-
-
+            if hasattr(module, "weight_decay_layer"):
+                module.weight_decay_layer(lr=lr, weight_decay_scale=weight_decay_scale)

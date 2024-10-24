@@ -1,11 +1,9 @@
 import torch
-
 from NeuroPress.utils import unpack_ternary
 
 if torch.cuda.is_available():
     import triton
     import triton.language as tl
-
     from NeuroPress.functions.utils import autotune, kernel_config_pruner
 
     @autotune(

@@ -8,11 +8,10 @@ from torchvision import datasets
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from pytorch_lightning.loggers import TensorBoardLogger
-
 from NeuroPress.layers import LINEAR_LAYERS
 from NeuroPress.models import MLP
 from NeuroPress.trainers import ClassificationTrainer
+from pytorch_lightning.loggers import TensorBoardLogger
 
 
 def main():
@@ -20,11 +19,13 @@ def main():
     hidden_size = 1024
     num_layers = 5
     lr = 0.001
-    max_epochs=1
-    accelerator = 'gpu'
+    max_epochs = 1
+    accelerator = "gpu"
 
     for qlayer in LINEAR_LAYERS:
-        logger = TensorBoardLogger("tb_logs", name=f"MLP_Layer-{qlayer(12, 12).__repr__()}")
+        logger = TensorBoardLogger(
+            "tb_logs", name=f"MLP_Layer-{qlayer(12, 12).__repr__()}"
+        )
 
         model = MLP(
             qlayer,
@@ -62,7 +63,9 @@ def main():
         train_loader = DataLoader(
             dataset=train_dataset, batch_size=batch_size, shuffle=True
         )
-        val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False)
+        val_loader = DataLoader(
+            dataset=val_dataset, batch_size=batch_size, shuffle=False
+        )
 
         trainer.fit(module, train_loader, val_loader)
 

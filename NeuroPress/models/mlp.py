@@ -8,7 +8,6 @@ by specifying the type of layers, input size, hidden layer size, number of class
 
 import torch.nn as nn
 import torch.nn.functional as F
-
 from NeuroPress.models.base import Qmodel
 
 

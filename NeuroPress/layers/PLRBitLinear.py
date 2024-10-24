@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from NeuroPress.functions.bitlinear import bitlinear
 from NeuroPress.functions.rmsnorm import rmsnorm
 from NeuroPress.layers.base import BaseQuantizedLayer
@@ -9,23 +8,23 @@ from NeuroPress.layers.rmsnorm import RMSNorm
 from NeuroPress.utils import pack_ternary
 
 
-class LBitLinear(nn.Linear):
+class PLRBitLinear(nn.Linear):
     def __init__(
         self,
         in_features,
         out_features,
-        bias=True, 
-        device=None, 
+        bias=True,
+        device=None,
         dtype=None,
-
     ):
-        super().__init__(in_features, out_features, bias=bias, device=device, dtype=dtype)
-        self.freeze_state = False
+        super().__init__(
+            in_features, out_features, bias=bias, device=device, dtype=dtype
+        )
         self.rmsnorm = RMSNorm(in_features)
-        # Register 'packed_weights' and 'weight_scale' as buffers
+        self.freeze_state = False
         self.register_buffer("packed_weights", None)
         self.scale = nn.Parameter(1 / self.weight.data.abs().mean())
-        self.rmsnorm = RMSNorm(in_features)
+        self.q_lambda = 1.0
 
     @staticmethod
     def activation_quant(x, dtype=None):
@@ -48,18 +47,28 @@ class LBitLinear(nn.Linear):
         return y, scale
 
     def freeze_layer(self):
+        """
+        Freeze the layer for inference.
+
+        This method quantizes the weights, packs them into ternary format, and removes
+        the floating-point weights to optimize for inference.
+
+        Returns:
+            None
+        """
         self.freeze_state = True
         w = self.weight
         device = self.weight.device
         q_weights = self.weight_quant(w)
-        q_weights = torch.clamp((q_weights * self.scale).round(), -1, 1).type(torch.int8)
-        self.packed_weights = pack_ternary(q_weights).t().contiguous()
+        q_weights = torch.clamp((q_weights * self.scale).round(), -1, 1).type(
+            torch.int8
+        )
         self.packed_weights = nn.Parameter(
             pack_ternary(q_weights).t().contiguous().to(device), requires_grad=False
         )
         self.float_weight = self.weight.data
         del self.weight
-        
+
     def unfreeze_layer(self):
         self.freeze_state = False
         self.packed_weights = None
@@ -71,8 +80,10 @@ class LBitLinear(nn.Linear):
             raise RuntimeError("Weights are not initialized for training.")
         w = self.weight
         x_norm = self.rmsnorm(x)
-        x_quant = x_norm + (self.activation_quant(x_norm) - x_norm).detach()
-        w_quant = w + (self.weight_quant(w) - w).detach()
+        x_quant = (
+            x_norm + self.q_lambda * (self.activation_quant(x_norm) - x_norm).detach()
+        )
+        w_quant = w + self.q_lambda * (self.weight_quant(w) - w).detach()
         y = F.linear(x_quant, w_quant)
         return y
 
@@ -90,8 +101,18 @@ class LBitLinear(nn.Linear):
         else:
             return self.train_forward(x)
 
-    def __repr__(self,):
-        return "LBitLinear"
+    def __repr__(
+        self,
+    ):
+        return "PLRBitLinear1"
+
+    def weight_decay_layer(self, lr, weight_decay_scale):
+        q_weight = (self.weight * self.scale).round().clamp_(-1, 1) / self.scale
+        squared_res = (self.weight - q_weight) ** 2
+        res = (self.weight - q_weight)
+        decay_factor = res * 0.1 + 0.9 * (res.sign() * squared_res * 0.9) 
+        self.weight = self.weight - lr * weight_decay_scale * decay_factor  # Apply decay directly to the weight
+        return self.weight
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         super()._save_to_state_dict(destination, prefix, keep_vars)
@@ -144,6 +165,5 @@ class LBitLinear(nn.Linear):
             and key_weight_scale not in state_dict.keys()
         ):
             self.freeze_state = False
-
 
 

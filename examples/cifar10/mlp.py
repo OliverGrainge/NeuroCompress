@@ -8,11 +8,10 @@ from torchvision import datasets
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from pytorch_lightning.loggers import TensorBoardLogger
-
 from NeuroPress.layers import LINEAR_LAYERS
 from NeuroPress.models import MLP
 from NeuroPress.trainers import ClassificationTrainer
+from pytorch_lightning.loggers import TensorBoardLogger
 
 
 def main():
@@ -21,10 +20,12 @@ def main():
     num_layers = 5
     lr = 0.001
     max_epochs = 10
-    accelerator = 'gpu'
+    accelerator = "gpu"
 
     for qlayer in LINEAR_LAYERS:
-        logger = TensorBoardLogger("tb_logs", name=f"MLP_Layer-{qlayer(12, 12).__repr__()}")
+        logger = TensorBoardLogger(
+            "tb_logs", name=f"MLP_Layer-{qlayer(12, 12).__repr__()}"
+        )
 
         # Adjust the input size for CIFAR-10 (32x32 images)
         model = MLP(
@@ -51,9 +52,11 @@ def main():
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.4914, 0.4822, 0.4465],  # CIFAR-10 mean
-                    std=[0.2470, 0.2435, 0.2616],   # CIFAR-10 std
+                    std=[0.2470, 0.2435, 0.2616],  # CIFAR-10 std
                 ),
-                transforms.Lambda(lambda x: x.view(-1)),  # Flatten the image to match input_size
+                transforms.Lambda(
+                    lambda x: x.view(-1)
+                ),  # Flatten the image to match input_size
             ]
         )
 
@@ -67,7 +70,9 @@ def main():
         train_loader = DataLoader(
             dataset=train_dataset, batch_size=batch_size, shuffle=True
         )
-        val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False)
+        val_loader = DataLoader(
+            dataset=val_dataset, batch_size=batch_size, shuffle=False
+        )
 
         trainer.fit(module, train_loader, val_loader)
 
