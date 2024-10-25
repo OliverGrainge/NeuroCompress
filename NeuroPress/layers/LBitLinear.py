@@ -55,7 +55,7 @@ class LBitLinear(nn.Linear):
         q_weights = torch.clamp((q_weights * self.scale).round(), -1, 1).type(
             torch.int8
         )
-        self.packed_weights = pack_ternary(q_weights).t().contiguous()
+        #self.packed_weights = pack_ternary(q_weights).t().contiguous()
         self.packed_weights = nn.Parameter(
             pack_ternary(q_weights).t().contiguous().to(device), requires_grad=False
         )
