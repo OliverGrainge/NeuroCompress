@@ -65,7 +65,6 @@ class LRBitLinear(nn.Linear):
     def unfreeze_layer(self):
         self.freeze_state = False
         self.packed_weights = None
-        self.scale = None
         self.weight = nn.Parameter(self.float_weight)
 
     def train_forward(self, x):

@@ -185,7 +185,7 @@ class BitLinear(BaseBitLinear):
         """
         self.freeze_state = False
         self.packed_weights = None
-        self.weight_scale = None
+        self.weight_scale = self.weight_scale.to(self.float_weight.device)
         self.weight = nn.Parameter(self.float_weight)
 
     @staticmethod
