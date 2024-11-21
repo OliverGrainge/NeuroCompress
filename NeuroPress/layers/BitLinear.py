@@ -24,7 +24,7 @@ import torch.nn.functional as F
 from NeuroPress.functions.bitlinear import bitlinear
 from NeuroPress.functions.rmsnorm import rmsnorm
 from NeuroPress.layers.base import BaseQuantizedLayer
-from NeuroPress.layers.RMSNorm import RMSNorm
+from NeuroPress.layers.rmsnorm import RMSNorm
 from NeuroPress.utils import pack_ternary
 
 
